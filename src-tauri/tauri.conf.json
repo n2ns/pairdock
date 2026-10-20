@@ -12,9 +12,13 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "boltkit",
-        "width": 800,
-        "height": 600
+        "width": 1080,
+        "height": 720,
+        "minWidth": 880,
+        "minHeight": 600,
+        "center": true
       }
     ],
     "security": {
@@ -30,6 +34,7 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "shortDescription": "Pair and configure Logitech receivers without Logi Options+"
   }
 }

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="80" x2="900" y2="960" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF8A5B"/>
+      <stop offset="0.55" stop-color="#E0518F"/>
+      <stop offset="1" stop-color="#6D4AFF"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="300" cy="170" r="680" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Squircle tile -->
+  <rect x="64" y="64" width="896" height="896" rx="216" fill="url(#bg)"/>
+  <rect x="64" y="64" width="896" height="896" rx="216" fill="url(#sheen)"/>
+
+  <!-- Orbit ring, back half (behind the mouse) -->
+  <g transform="rotate(-24 512 540)">
+    <path d="M172 540 A340 112 0 0 1 852 540" fill="none" stroke="#FFFFFF" stroke-opacity="0.38"
+          stroke-width="28" stroke-linecap="round"/>
+  </g>
+
+  <!-- Soft shadow under the mouse -->
+  <ellipse cx="512" cy="760" rx="150" ry="26" fill="#2A0E5C" fill-opacity="0.22"/>
+
+  <!-- Mouse body -->
+  <rect x="356" y="222" width="312" height="510" rx="156" fill="#FFFFFF" fill-opacity="0.2"/>
+  <!-- Highlighted left button -->
+  <path d="M512 222 L512 424 L356 424 L356 378 A156 156 0 0 1 512 222 Z" fill="#FFFFFF"/>
+  <rect x="356" y="222" width="312" height="510" rx="156" fill="none" stroke="#FFFFFF" stroke-width="34"/>
+  <line x1="512" y1="222" x2="512" y2="424" stroke="#FFFFFF" stroke-width="20"/>
+  <line x1="356" y1="424" x2="668" y2="424" stroke="#FFFFFF" stroke-width="20"/>
+
+  <!-- Wheel -->
+  <rect x="490" y="300" width="44" height="96" rx="22" fill="#6D4AFF" stroke="#FFFFFF" stroke-width="12"/>
+
+  <!-- Orbit ring, front half (in front of the mouse) -->
+  <g transform="rotate(-24 512 540)">
+    <path d="M172 540 A340 112 0 0 0 852 540" fill="none" stroke="#FFFFFF" stroke-width="28"
+          stroke-linecap="round"/>
+    <circle cx="852" cy="540" r="30" fill="#FFF3C9" stroke="#FFFFFF" stroke-width="10"/>
+  </g>
+</svg>

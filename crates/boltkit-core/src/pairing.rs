@@ -29,6 +29,7 @@ pub const DISCOVERY_TIMEOUT_SECS: u8 = 30;
 
 /// A device in pairing mode found during discovery.
 #[derive(Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Discovered {
     pub address: [u8; 6],
     pub kind: DeviceKind,
@@ -53,6 +54,7 @@ impl Discovered {
 
 /// A mouse button to click while entering a passkey.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub enum Click {
     Left,
     Right,
@@ -60,6 +62,7 @@ pub enum Click {
 
 /// What the user has to do on the device to confirm pairing.
 #[derive(Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(tag = "kind", content = "value", rename_all = "camelCase")]
 pub enum PasskeyPrompt {
     /// Type these digits on the keyboard, then press Enter.
     Type(String),
@@ -70,6 +73,7 @@ pub enum PasskeyPrompt {
 
 /// Progress of a pairing session.
 #[derive(Clone, PartialEq, Debug, Serialize)]
+#[serde(tag = "type", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum PairingEvent {
     DiscoveryStarted,
 
@@ -95,6 +99,7 @@ pub enum PairingEvent {
 
 /// A press reported while the passkey is entered.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub enum PasskeyPress {
     Started,
     Key,
@@ -346,6 +351,23 @@ mod tests {
         };
         assert_eq!(clicks.iter().filter(|c| **c == Right).count(), 1);
         assert_eq!(clicks.last(), Some(&Right));
+    }
+
+    #[test]
+    fn events_serialize_for_the_frontend() {
+        use super::{Click, PairingEvent};
+        let event = PairingEvent::Passkey {
+            address: [1, 2, 3, 4, 5, 6],
+            prompt: PasskeyPrompt::Click(vec![Click::Left, Click::Right]),
+        };
+        assert_eq!(
+            serde_json::to_string(&event).unwrap(),
+            r#"{"type":"passkey","address":[1,2,3,4,5,6],"prompt":{"kind":"click","value":["left","right"]}}"#
+        );
+        assert_eq!(
+            serde_json::to_string(&PairingEvent::DiscoveryStopped { error: 1 }).unwrap(),
+            r#"{"type":"discoveryStopped","error":1}"#
+        );
     }
 
     #[test]

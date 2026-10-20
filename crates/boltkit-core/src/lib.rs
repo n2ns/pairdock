@@ -8,6 +8,7 @@
 pub mod config;
 pub mod controls;
 pub mod enumerate;
+pub mod inventory;
 pub mod keys;
 pub mod pairing;
 pub mod remap;

@@ -28,6 +28,16 @@ pub struct ReceiverInterface {
     pub long_path: Option<CString>,
 }
 
+impl ReceiverInterface {
+    /// A stable identifier of the receiver for as long as it stays plugged
+    /// into the same port.
+    pub fn id(&self) -> String {
+        let path = self.long_path.as_ref().or(self.short_path.as_ref());
+        path.map(|p| interface_key(&p.to_string_lossy()))
+            .unwrap_or_default()
+    }
+}
+
 /// Lists all connected receivers that boltkit knows how to talk to.
 pub fn list_receivers(api: &HidApi) -> Vec<ReceiverInterface> {
     let mut found: BTreeMap<String, ReceiverInterface> = BTreeMap::new();

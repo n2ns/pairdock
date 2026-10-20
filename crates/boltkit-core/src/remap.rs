@@ -23,7 +23,7 @@ use tokio::{sync::watch, task::JoinHandle, time::timeout};
 
 use crate::{
     config::{ButtonAction, Config},
-    enumerate::{interface_key, list_receivers, open_receiver},
+    enumerate::{list_receivers, open_receiver},
     keys::{Shortcut, parse_shortcut},
 };
 
@@ -83,7 +83,7 @@ async fn run(config: watch::Receiver<Config>, mut stop: watch::Receiver<bool>, i
                 // Stop tasks whose receiver disappeared or whose task ended.
                 receivers.retain(|key, (stop, task)| {
                     let keep = !task.is_finished()
-                        && present.iter().any(|iface| interface_key_of(iface) == *key);
+                        && present.iter().any(|iface| iface.id() == *key);
                     if !keep {
                         stop.send_replace(true);
                     }
@@ -91,7 +91,7 @@ async fn run(config: watch::Receiver<Config>, mut stop: watch::Receiver<bool>, i
                 });
 
                 for iface in present {
-                    let key = interface_key_of(&iface);
+                    let key = iface.id();
                     if receivers.contains_key(&key) {
                         continue;
                     }
@@ -125,12 +125,6 @@ async fn run(config: watch::Receiver<Config>, mut stop: watch::Receiver<bool>, i
         stop.send_replace(true);
         let _ = task.await;
     }
-}
-
-fn interface_key_of(iface: &crate::enumerate::ReceiverInterface) -> String {
-    let path = iface.long_path.as_ref().or(iface.short_path.as_ref());
-    path.map(|p| interface_key(&p.to_string_lossy()))
-        .unwrap_or_default()
 }
 
 /// Serves one Bolt receiver until it is unplugged or the engine stops.
