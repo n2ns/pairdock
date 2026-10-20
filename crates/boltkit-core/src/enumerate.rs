@@ -4,6 +4,7 @@ use std::{collections::BTreeMap, ffi::CString, sync::Arc};
 
 use hidapi::HidApi;
 use hidpp::{
+    nibble::U4,
     channel::{
         HidppChannel,
         LONG_REPORT_USAGE,
@@ -79,6 +80,7 @@ pub fn list_receivers(api: &HidApi) -> Vec<ReceiverInterface> {
 pub async fn open_receiver(
     api: &HidApi,
     iface: &ReceiverInterface,
+    role: ChannelRole,
 ) -> Result<(Arc<HidppChannel>, Receiver), OpenError> {
     let raw = HidappChannel::open(
         api,
@@ -88,10 +90,38 @@ pub async fn open_receiver(
         iface.long_path.as_deref(),
     )?;
     let chan = Arc::new(HidppChannel::from_raw_channel(raw).await?);
-    chan.set_rotating_sw_id(true);
+    prepare_channel(&chan, role);
 
     let receiver = receiver::detect(Arc::clone(&chan)).ok_or(OpenError::UnknownReceiver)?;
     Ok((chan, receiver))
+}
+
+/// Who uses a channel. Windows hands every input report to every open handle
+/// of a device, so channels opened at the same time must not reuse each
+/// other's software IDs, or one picks up the other's responses.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum ChannelRole {
+    /// The long-lived remapping engine.
+    Engine,
+    /// Short-lived channels for listing, pairing and the CLI.
+    Shared,
+}
+
+/// The software ID reserved for the engine; other channels rotate below it.
+const ENGINE_SW_ID: u8 = 0x0f;
+
+fn prepare_channel(chan: &HidppChannel, role: ChannelRole) {
+    match role {
+        // The engine sends one request at a time, so a fixed ID is enough.
+        ChannelRole::Engine => {
+            chan.set_rotating_sw_id(false);
+            chan.set_sw_id(U4::from_lo(ENGINE_SW_ID));
+        },
+        ChannelRole::Shared => {
+            chan.set_max_rotating_sw_id(U4::from_lo(ENGINE_SW_ID - 1));
+            chan.set_rotating_sw_id(true);
+        },
+    }
 }
 
 fn is_known_receiver(product_id: u16) -> bool {
@@ -137,7 +167,135 @@ pub enum OpenError {
 
 #[cfg(test)]
 mod tests {
-    use super::interface_key;
+    use std::{
+        collections::VecDeque,
+        error::Error,
+        sync::{Arc, Mutex},
+        time::Duration,
+    };
+
+    use hidpp::{
+        async_trait,
+        channel::{HidppChannel, RawHidChannel},
+        nibble::U4,
+        protocol::v20,
+    };
+
+    use super::{ChannelRole, interface_key, prepare_channel};
+
+    /// Two handles on one device: every response goes to both of them, like
+    /// Windows delivers input reports to every open handle. Only requests
+    /// written through `answering` get a response.
+    struct Bus {
+        queues: Mutex<[VecDeque<Vec<u8>>; 2]>,
+        answering: usize,
+    }
+
+    struct Handle {
+        bus: Arc<Bus>,
+        index: usize,
+    }
+
+    #[async_trait]
+    impl RawHidChannel for Handle {
+        fn vendor_id(&self) -> u16 {
+            0x046d
+        }
+
+        fn product_id(&self) -> u16 {
+            0xc548
+        }
+
+        async fn write_report(&self, src: &[u8]) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            if self.index == self.bus.answering {
+                let mut reply = src.to_vec();
+                reply[4] = 0xbb;
+                for queue in self.bus.queues.lock().unwrap().iter_mut() {
+                    queue.push_back(reply.clone());
+                }
+            }
+            Ok(src.len())
+        }
+
+        async fn read_report(&self, buf: &mut [u8]) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            let report = self.bus.queues.lock().unwrap()[self.index].pop_front();
+            match report {
+                Some(report) => {
+                    buf[..report.len()].copy_from_slice(&report);
+                    Ok(report.len())
+                },
+                None => {
+                    std::thread::sleep(Duration::from_millis(10));
+                    Ok(0)
+                },
+            }
+        }
+
+        fn supports_short_long_hidpp(&self) -> Option<(bool, bool)> {
+            Some((true, false))
+        }
+
+        async fn get_report_descriptor(
+            &self,
+            _buf: &mut [u8],
+        ) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            unreachable!()
+        }
+    }
+
+    fn request(chan: &HidppChannel) -> v20::Message {
+        v20::Message::Short(
+            v20::MessageHeader {
+                device_index: 0x02,
+                feature_index: 0x08,
+                function_id: U4::from_lo(0x1),
+                software_id: chan.get_sw_id(),
+            },
+            [0x00, 0x00, 0x00],
+        )
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn engine_does_not_take_responses_meant_for_another_channel() {
+        let bus = Arc::new(Bus {
+            queues: Mutex::default(),
+            answering: 1,
+        });
+        let engine = Arc::new(
+            HidppChannel::from_raw_channel(Handle {
+                bus: Arc::clone(&bus),
+                index: 0,
+            })
+            .await
+            .unwrap(),
+        );
+        let ui = HidppChannel::from_raw_channel(Handle {
+            bus: Arc::clone(&bus),
+            index: 1,
+        })
+        .await
+        .unwrap();
+        prepare_channel(&engine, ChannelRole::Engine);
+        prepare_channel(&ui, ChannelRole::Shared);
+
+        // The engine asks first and gets no answer of its own...
+        let engine_request = tokio::spawn({
+            let engine = Arc::clone(&engine);
+            async move {
+                let msg = request(&engine);
+                tokio::time::timeout(Duration::from_millis(500), engine.send_v20(msg)).await
+            }
+        });
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        // ...while the UI sends the same request and is answered.
+        ui.send_v20(request(&ui)).await.unwrap();
+
+        assert!(
+            engine_request.await.unwrap().is_err(),
+            "the engine received the response to the UI's request"
+        );
+    }
 
     #[test]
     fn groups_windows_collections() {

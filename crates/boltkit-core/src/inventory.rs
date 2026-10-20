@@ -17,7 +17,7 @@ use tokio::time::timeout;
 
 use crate::{
     controls::control_name,
-    enumerate::{list_receivers, open_receiver},
+    enumerate::{ChannelRole, list_receivers, open_receiver},
 };
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(2);
@@ -80,7 +80,7 @@ pub async fn receivers() -> Result<Vec<ReceiverSummary>, String> {
 
     for iface in list_receivers(&api) {
         let id = iface.id();
-        let (_chan, receiver) = match open_receiver(&api, &iface).await {
+        let (_chan, receiver) = match open_receiver(&api, &iface, ChannelRole::Shared).await {
             Ok(opened) => opened,
             Err(err) => {
                 tracing::warn!("could not open receiver {id}: {err}");
@@ -134,7 +134,7 @@ pub async fn open_bolt(receiver_id: &str) -> Result<(Arc<HidppChannel>, bolt::Re
         .into_iter()
         .find(|iface| iface.id() == receiver_id)
         .ok_or("the receiver is no longer connected")?;
-    match open_receiver(&api, &iface).await.map_err(|e| e.to_string())? {
+    match open_receiver(&api, &iface, ChannelRole::Shared).await.map_err(|e| e.to_string())? {
         (chan, Receiver::Bolt(bolt)) => Ok((chan, bolt)),
         _ => Err("only Bolt receivers are supported".into()),
     }

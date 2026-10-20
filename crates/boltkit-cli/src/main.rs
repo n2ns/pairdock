@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result, bail};
 use boltkit_core::{
-    enumerate::{list_receivers, open_receiver},
+    enumerate::{ChannelRole, list_receivers, open_receiver},
     hidpp::receiver::{Receiver, bolt},
     pairing::{BoltPairing, Click, PairingEvent, PasskeyPress, PasskeyPrompt},
 };
@@ -94,7 +94,7 @@ async fn list(api: &HidApi) -> Result<()> {
     }
 
     for iface in &receivers {
-        let (_chan, receiver) = open_receiver(api, iface)
+        let (_chan, receiver) = open_receiver(api, iface, ChannelRole::Shared)
             .await
             .with_context(|| format!("could not open receiver {:04x}", iface.product_id))?;
 
@@ -136,7 +136,7 @@ async fn first_bolt(
     api: &HidApi,
 ) -> Result<(std::sync::Arc<boltkit_core::hidpp::channel::HidppChannel>, bolt::Receiver)> {
     for iface in list_receivers(api) {
-        let (chan, receiver) = open_receiver(api, &iface).await?;
+        let (chan, receiver) = open_receiver(api, &iface, ChannelRole::Shared).await?;
         if let Receiver::Bolt(bolt) = receiver {
             return Ok((chan, bolt));
         }

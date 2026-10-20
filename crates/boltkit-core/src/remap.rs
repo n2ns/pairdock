@@ -23,12 +23,15 @@ use tokio::{sync::watch, task::JoinHandle, time::timeout};
 
 use crate::{
     config::{ButtonAction, Config},
-    enumerate::{list_receivers, open_receiver},
+    enumerate::{ChannelRole, list_receivers, open_receiver},
     keys::{Shortcut, parse_shortcut},
 };
 
 /// How often the engine looks for newly plugged-in receivers.
 const RESCAN_INTERVAL: Duration = Duration::from_secs(3);
+
+/// How often a receiver task checks whether its receiver is still there.
+const LIVENESS_INTERVAL: Duration = Duration::from_secs(1);
 
 /// Upper bound for a single request to a device. Devices that go to sleep in
 /// the middle of a request never answer.
@@ -95,7 +98,7 @@ async fn run(config: watch::Receiver<Config>, mut stop: watch::Receiver<bool>, i
                     if receivers.contains_key(&key) {
                         continue;
                     }
-                    match open_receiver(&api, &iface).await {
+                    match open_receiver(&api, &iface, ChannelRole::Engine).await {
                         Ok((chan, Receiver::Bolt(bolt))) => {
                             let (stop_tx, stop_rx) = watch::channel(false);
                             let task = tokio::spawn(run_bolt(
@@ -155,8 +158,18 @@ async fn run_bolt(
         Err(err) => tracing::warn!("could not list paired devices: {err}"),
     }
 
+    let mut liveness = tokio::time::interval(LIVENESS_INTERVAL);
     loop {
         tokio::select! {
+            // A receiver that is unplugged and plugged back in between two
+            // scans keeps its id, so the engine only reopens it once this task
+            // ends. The event stream never closes on its own.
+            _ = liveness.tick() => {
+                if chan.is_closed() {
+                    tracing::info!("receiver disconnected");
+                    return;
+                }
+            },
             event = events.recv() => {
                 let Ok(event) = event else { break };
                 if let bolt::Event::DeviceConnection(conn) = event {
@@ -383,5 +396,98 @@ impl Injector {
 
     fn release(&self, shortcut: Shortcut) {
         let _ = self.0.send((shortcut, Direction::Release));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        error::Error,
+        sync::{
+            Arc,
+            atomic::{AtomicBool, Ordering},
+        },
+        time::Duration,
+    };
+
+    use hidpp::{
+        async_trait,
+        channel::{HidppChannel, RawHidChannel},
+        receiver::{Receiver, detect},
+    };
+    use tokio::sync::watch;
+
+    use super::{Injector, run_bolt};
+    use crate::config::Config;
+
+    /// A Bolt receiver that never answers and can be "unplugged", after which
+    /// every read fails like a vanished HID handle.
+    struct FakeReceiver {
+        unplugged: Arc<AtomicBool>,
+    }
+
+    #[async_trait]
+    impl RawHidChannel for FakeReceiver {
+        fn vendor_id(&self) -> u16 {
+            0x046d
+        }
+
+        fn product_id(&self) -> u16 {
+            0xc548
+        }
+
+        async fn write_report(&self, src: &[u8]) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            Ok(src.len())
+        }
+
+        async fn read_report(&self, _buf: &mut [u8]) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            if self.unplugged.load(Ordering::SeqCst) {
+                return Err("device disconnected".into());
+            }
+            std::thread::sleep(Duration::from_millis(20));
+            Ok(0)
+        }
+
+        fn supports_short_long_hidpp(&self) -> Option<(bool, bool)> {
+            Some((true, true))
+        }
+
+        async fn get_report_descriptor(
+            &self,
+            _buf: &mut [u8],
+        ) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            unreachable!()
+        }
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn receiver_task_ends_when_the_receiver_is_unplugged() {
+        let unplugged = Arc::new(AtomicBool::new(false));
+        let chan = Arc::new(
+            HidppChannel::from_raw_channel(FakeReceiver {
+                unplugged: Arc::clone(&unplugged),
+            })
+            .await
+            .unwrap(),
+        );
+        let Some(Receiver::Bolt(bolt)) = detect(Arc::clone(&chan)) else {
+            panic!("not detected as a Bolt receiver");
+        };
+
+        let (_config_tx, config_rx) = watch::channel(Config::default());
+        let (_stop_tx, stop_rx) = watch::channel(false);
+        let task = tokio::spawn(run_bolt(chan, bolt, config_rx, stop_rx, Injector::spawn()));
+
+        // Startup requests time out (nobody answers), then the task waits for
+        // events. Unplug the receiver while it waits.
+        tokio::time::sleep(Duration::from_secs(5)).await;
+        assert!(!task.is_finished());
+        unplugged.store(true, Ordering::SeqCst);
+
+        // The engine only reopens receivers whose task ended, so it must end.
+        tokio::time::timeout(Duration::from_secs(3), task)
+            .await
+            .expect("the receiver task kept running on an unplugged receiver")
+            .unwrap();
     }
 }

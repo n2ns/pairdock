@@ -236,12 +236,19 @@ pub struct HidppChannel {
     /// The software ID to provide at the next call to [`Self::get_sw_id`].
     software_id: AtomicU8,
 
+    /// The highest software ID used while rotating.
+    max_software_id: AtomicU8,
+
     /// All sent messages that are waiting for a response.
     pending_messages: Arc<Mutex<VecDeque<PendingMessage>>>,
 
     /// Registered listeners that will receive notifications about incoming
     /// messages.
     message_listeners: Arc<Mutex<HashMap<u32, MessageListener>>>,
+
+    /// Set once the read thread stopped because reading failed, i.e. the
+    /// device is gone.
+    closed: Arc<AtomicBool>,
 
     /// The sender signaling the read thread to stop.
     read_thread_close: Option<oneshot::Sender<()>>,
@@ -295,8 +302,10 @@ impl HidppChannel {
         let message_listeners_rc = Arc::new(Mutex::new(HashMap::<u32, MessageListener>::new()));
 
         let (close_sender, mut close_receiver) = oneshot::channel::<()>();
+        let closed = Arc::new(AtomicBool::new(false));
 
         let read_thread_hdl = thread::spawn({
+            let closed = Arc::clone(&closed);
             let raw_channel = Arc::clone(&raw_channel_rc);
             let pending_messages = Arc::clone(&pending_messages_rc);
             let message_listeners = Arc::clone(&message_listeners_rc);
@@ -318,6 +327,7 @@ impl HidppChannel {
                         // reading and fail every request still waiting for a
                         // response by dropping its sender.
                         let Ok(len) = res else {
+                            closed.store(true, Ordering::SeqCst);
                             pending_messages.lock().unwrap().clear();
                             break;
                         };
@@ -327,6 +337,11 @@ impl HidppChannel {
                         };
 
                         let mut msgs = pending_messages.lock().unwrap();
+                        // Callers that gave up (e.g. after a timeout) dropped
+                        // their receiver. Their entries must not match this
+                        // message, or a later identical request never sees
+                        // its response.
+                        msgs.retain(|elem| !elem.sender.is_canceled());
                         let mut matched = false;
                         if let Some(pos) =
                             msgs.iter().position(|elem| (elem.response_predicate)(&msg))
@@ -352,11 +367,19 @@ impl HidppChannel {
             raw_channel: raw_channel_rc,
             rotate_software_id: AtomicBool::new(false),
             software_id: AtomicU8::new(0x01),
+            max_software_id: AtomicU8::new(0x0f),
             pending_messages: pending_messages_rc,
             message_listeners: message_listeners_rc,
+            closed,
             read_thread_close: Some(close_sender),
             read_thread_hdl: Some(read_thread_hdl),
         })
+    }
+
+    /// Whether the underlying device is gone: reading from it failed and no
+    /// further messages will arrive.
+    pub fn is_closed(&self) -> bool {
+        self.closed.load(Ordering::SeqCst)
     }
 
     /// Sets the software ID that should be returned by the next call to
@@ -380,6 +403,13 @@ impl HidppChannel {
         self.rotate_software_id.store(enable, Ordering::SeqCst);
     }
 
+    /// Limits the rotation of [`Self::set_rotating_sw_id`] to `1..=max`, which
+    /// leaves the IDs above `max` free for other channels to the same device.
+    pub fn set_max_rotating_sw_id(&self, max: U4) {
+        self.max_software_id
+            .store(max.to_lo().max(1), Ordering::SeqCst);
+    }
+
     /// Provides a software ID that can be used to send a HID++ message across
     /// the channel.
     ///
@@ -387,10 +417,11 @@ impl HidppChannel {
     /// may rotate (as indicated by [`Self::set_rotating_sw_id`]).
     pub fn get_sw_id(&self) -> U4 {
         if self.rotate_software_id.load(Ordering::SeqCst) {
+            let max = self.max_software_id.load(Ordering::SeqCst);
             U4::from_lo(
                 self.software_id
                     .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |old| {
-                        Some(if old & 0x0f == 0x0f {
+                        Some(if old & 0x0f >= max {
                             0x01
                         } else {
                             old.wrapping_add(1)
@@ -513,4 +544,116 @@ pub enum ChannelError {
     /// Indicates that no response was received following a request.
     #[error("the device did not respond to the request")]
     NoResponse,
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        collections::VecDeque,
+        error::Error,
+        sync::{Arc, Condvar, Mutex, mpsc},
+        thread,
+        time::Duration,
+    };
+
+    use async_trait::async_trait;
+    use futures::FutureExt;
+
+    use super::{HidppChannel, HidppMessage, RawHidChannel, SHORT_REPORT_LENGTH};
+
+    /// Answers every written short report by echoing it back with the last
+    /// byte set to the number of the write, except for writes listed in
+    /// `unanswered`.
+    struct EchoDevice {
+        writes: Mutex<u8>,
+        unanswered: Vec<u8>,
+        inbox: Arc<(Mutex<VecDeque<Vec<u8>>>, Condvar)>,
+    }
+
+    #[async_trait]
+    impl RawHidChannel for EchoDevice {
+        fn vendor_id(&self) -> u16 {
+            0x046d
+        }
+
+        fn product_id(&self) -> u16 {
+            0xc548
+        }
+
+        async fn write_report(&self, src: &[u8]) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            let mut writes = self.writes.lock().unwrap();
+            *writes += 1;
+            if !self.unanswered.contains(&writes) {
+                let mut reply = src.to_vec();
+                reply[SHORT_REPORT_LENGTH - 1] = *writes;
+                let (queue, ready) = &*self.inbox;
+                queue.lock().unwrap().push_back(reply);
+                ready.notify_all();
+            }
+            Ok(src.len())
+        }
+
+        async fn read_report(&self, buf: &mut [u8]) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            // Return empty reads now and then so that the read thread notices
+            // when the channel is dropped.
+            let (queue, ready) = &*self.inbox;
+            let mut queue = queue.lock().unwrap();
+            if queue.is_empty() {
+                queue = ready.wait_timeout(queue, Duration::from_millis(50)).unwrap().0;
+            }
+            match queue.pop_front() {
+                Some(report) => {
+                    buf[..report.len()].copy_from_slice(&report);
+                    Ok(report.len())
+                },
+                None => Ok(0),
+            }
+        }
+
+        fn supports_short_long_hidpp(&self) -> Option<(bool, bool)> {
+            Some((true, false))
+        }
+
+        async fn get_report_descriptor(
+            &self,
+            _buf: &mut [u8],
+        ) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            unreachable!()
+        }
+    }
+
+    fn same_request(msg: &HidppMessage) -> bool {
+        matches!(msg, HidppMessage::Short(d) if d[..5] == [0x02, 0x08, 0x1a, 0x00, 0x00])
+    }
+
+    #[test]
+    fn abandoned_request_does_not_steal_the_next_response() {
+        let chan = Arc::new(
+            futures::executor::block_on(HidppChannel::from_raw_channel(EchoDevice {
+                writes: Mutex::new(0),
+                unanswered: vec![1],
+                inbox: Arc::default(),
+            }))
+            .unwrap(),
+        );
+        let request = HidppMessage::Short([0x02, 0x08, 0x1a, 0x00, 0x00, 0x00]);
+
+        // The first request is never answered and its caller gives up, like
+        // a request dropped by a timeout.
+        assert!(chan.send(request, same_request).now_or_never().is_none());
+
+        // The same request again must receive its own answer (write #2).
+        let (tx, rx) = mpsc::channel();
+        thread::spawn({
+            let chan = Arc::clone(&chan);
+            move || {
+                let _ = tx.send(futures::executor::block_on(chan.send(request, same_request)));
+            }
+        });
+        let response = rx
+            .recv_timeout(Duration::from_secs(2))
+            .expect("the second request never got a response")
+            .unwrap();
+        assert_eq!(response, HidppMessage::Short([0x02, 0x08, 0x1a, 0x00, 0x00, 0x02]));
+    }
 }
