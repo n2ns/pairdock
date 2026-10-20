@@ -6,6 +6,7 @@
 //! operations the CLI and the desktop app are built on.
 
 pub mod enumerate;
+pub mod pairing;
 pub mod transport;
 
 pub use hidpp;

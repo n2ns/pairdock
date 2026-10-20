@@ -176,12 +176,16 @@ impl Receiver {
                     0x53 => {
                         emitter.emit(Event::DeviceDiscoveryStatus {
                             discovery_enabled: payload[0] == 0x00,
+                            error: payload[1],
                         });
                     },
                     // Pairing status
                     0x54 => {
-                        // payload[0] contains some kind of information about the status. I don't
-                        // know how to map that though.
+                        let state = match payload[0] {
+                            0x00 => PairingState::LockOpen,
+                            0x02 => PairingState::Paired,
+                            _ => PairingState::LockClosed,
+                        };
 
                         let error = if payload[1] == 0x00 {
                             None
@@ -194,6 +198,7 @@ impl Receiver {
                         };
 
                         emitter.emit(Event::PairingStatus {
+                            state,
                             device_address: payload[2..=7].try_into().unwrap(),
                             pairing_error: error,
                             slot: if payload[8] == 0x00 {
@@ -583,6 +588,10 @@ pub enum Event {
     /// Is emitted whenever the device discovery status changes.
     DeviceDiscoveryStatus {
         discovery_enabled: bool,
+
+        /// A non-zero value indicates that discovery stopped because of an
+        /// error. The meaning of the individual codes is undocumented.
+        error: u8,
     },
 
     /// Is emitted many times for every device discovered using
@@ -629,6 +638,7 @@ pub enum Event {
 
     /// Is emitted whenever the status of a pairing process changes.
     PairingStatus {
+        state: PairingState,
         device_address: [u8; 6],
         pairing_error: Option<PairingError>,
 
@@ -688,6 +698,25 @@ pub struct DeviceConnection {
     pub encrypted: bool,
     pub online: bool,
     pub wpid: u16,
+}
+
+/// The state reported by an [`Event::PairingStatus`] event.
+///
+/// Follows Solaar's handling of the `0x54` notification, which only gives a
+/// meaning to the values `0x00` and `0x02`; every other value is treated as a
+/// closed lock.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[non_exhaustive]
+pub enum PairingState {
+    /// The receiver opened its pairing lock and waits for the device.
+    LockOpen,
+
+    /// The pairing lock closed without a new device.
+    LockClosed,
+
+    /// The pairing lock closed and the device was paired to `slot`.
+    Paired,
 }
 
 /// Represents an error during device pairing.

@@ -93,6 +93,7 @@ fn spawn_reader(
             match dev.read_timeout(&mut buf, READ_POLL.as_millis() as i32) {
                 Ok(0) => continue,
                 Ok(n) => {
+                    tracing::trace!("<- {:02x?}", &buf[..n]);
                     if tx.send_blocking(buf[..n].to_vec()).is_err() {
                         break;
                     }
@@ -146,6 +147,7 @@ impl RawHidChannel for HidappChannel {
             return Ok(src.len());
         }
 
+        tracing::trace!("-> {:02x?}", src);
         Ok(dev.write(src)?)
     }
 
