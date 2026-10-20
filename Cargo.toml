@@ -1,0 +1,38 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/hidpp",
+    "crates/boltkit-core",
+    "crates/boltkit-cli",
+    "src-tauri",
+]
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/boltkit/boltkit"
+
+[workspace.dependencies]
+hidpp = { path = "crates/hidpp", features = ["serde"] }
+boltkit-core = { path = "crates/boltkit-core" }
+
+anyhow = "1.0.104"
+async-channel = "2.5.0"
+async-trait = "0.1.92"
+clap = { version = "4.6.7", features = ["derive"] }
+futures = "0.3.34"
+hidapi = "2.6.7"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+thiserror = "2.0.21"
+tokio = { version = "1.54.0", features = ["rt-multi-thread", "macros", "sync", "time"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+
+# Tauri's size guideline: https://tauri.app/concept/size/#cargo-configuration
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

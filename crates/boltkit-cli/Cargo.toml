@@ -1,0 +1,20 @@
+[package]
+name = "boltkit-cli"
+version = "0.1.0"
+description = "Command-line interface for boltkit"
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "boltkit-cli"
+path = "src/main.rs"
+
+[dependencies]
+boltkit-core.workspace = true
+hidpp.workspace = true
+
+anyhow.workspace = true
+clap.workspace = true
+hidapi.workspace = true
+tokio.workspace = true
+tracing-subscriber.workspace = true

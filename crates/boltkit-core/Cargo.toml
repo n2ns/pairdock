@@ -1,0 +1,18 @@
+[package]
+name = "boltkit-core"
+version = "0.1.0"
+description = "Receiver pairing and device configuration for Logitech HID++ devices"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+hidpp.workspace = true
+
+async-channel.workspace = true
+async-trait.workspace = true
+futures.workspace = true
+hidapi.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
