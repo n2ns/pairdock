@@ -1,0 +1,10 @@
+{
+  "devices": {
+    "45098": {
+      "buttons": {
+        "83": { "type": "shortcut", "keys": "VolumeUp" },
+        "86": { "type": "shortcut", "keys": "VolumeDown" }
+      }
+    }
+  }
+}

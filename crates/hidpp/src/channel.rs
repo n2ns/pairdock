@@ -313,8 +313,13 @@ impl HidppChannel {
                             res = raw_channel.read_report(&mut buf).fuse() => res
                         };
 
+                        // A failing read means the device is gone (e.g. the
+                        // receiver was unplugged). Retrying would spin, so stop
+                        // reading and fail every request still waiting for a
+                        // response by dropping its sender.
                         let Ok(len) = res else {
-                            continue;
+                            pending_messages.lock().unwrap().clear();
+                            break;
                         };
 
                         let Some(msg) = HidppMessage::read_raw(&buf[..len]) else {

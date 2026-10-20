@@ -34,6 +34,13 @@ enum Command {
         slot: u8,
     },
 
+    /// Apply button assignments from a JSON file until Ctrl+C.
+    Run {
+        /// Configuration file, see `examples/`.
+        #[arg(long)]
+        config: std::path::PathBuf,
+    },
+
     /// Remove the device in the given slot from the receiver.
     Unpair {
         /// Slot number as shown by `list`.
@@ -70,6 +77,7 @@ async fn main() -> Result<()> {
         Command::List => list(&api).await,
         Command::Pair => pair(&api).await,
         Command::Info { slot } => info(&api, slot).await,
+        Command::Run { config } => run(&config).await,
         Command::Unpair { slot } => unpair(&api, slot).await,
     }
 }
@@ -288,5 +296,20 @@ async fn info(api: &HidApi, slot: u8) -> Result<()> {
         );
     }
 
+    Ok(())
+}
+
+async fn run(path: &std::path::Path) -> Result<()> {
+    use boltkit_core::{config::Config, remap::RemapEngine};
+
+    let text = std::fs::read_to_string(path)
+        .with_context(|| format!("could not read {}", path.display()))?;
+    let config: Config = serde_json::from_str(&text).context("invalid configuration")?;
+
+    let engine = RemapEngine::start(config);
+    println!("Running. Press Ctrl+C to stop and restore the buttons.");
+    tokio::signal::ctrl_c().await?;
+    engine.stop(Duration::from_millis(500)).await;
+    println!("Stopped.");
     Ok(())
 }

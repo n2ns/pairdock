@@ -16,5 +16,6 @@ hidpp.workspace = true
 anyhow.workspace = true
 clap.workspace = true
 hidapi.workspace = true
-tokio.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["signal"] }
 tracing-subscriber.workspace = true

@@ -100,7 +100,7 @@ fn is_known_receiver(product_id: u16) -> bool {
 /// last `&NNNN` of the instance id. Dropping both groups the short and long
 /// HID++ collections of one receiver together. On other platforms one path
 /// already covers the whole interface and is used as is.
-fn interface_key(path: &str) -> String {
+pub fn interface_key(path: &str) -> String {
     let lower = path.to_ascii_lowercase();
     let parts: Vec<&str> = lower.split('#').collect();
     if parts.len() < 3 || !parts[1].contains("&col") {
