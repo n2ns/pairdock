@@ -41,6 +41,9 @@ enum Command {
         config: std::path::PathBuf,
     },
 
+    /// Restore every button of every connected device to its default.
+    Reset,
+
     /// Remove the device in the given slot from the receiver.
     Unpair {
         /// Slot number as shown by `list`.
@@ -78,6 +81,7 @@ async fn main() -> Result<()> {
         Command::Pair => pair(&api).await,
         Command::Info { slot } => info(&api, slot).await,
         Command::Run { config } => run(&config).await,
+        Command::Reset => reset().await,
         Command::Unpair { slot } => unpair(&api, slot).await,
     }
 }
@@ -309,7 +313,23 @@ async fn run(path: &std::path::Path) -> Result<()> {
     let engine = RemapEngine::start(config);
     println!("Running. Press Ctrl+C to stop and restore the buttons.");
     tokio::signal::ctrl_c().await?;
-    engine.stop(Duration::from_millis(500)).await;
+    engine.stop(RESTORE_LIMIT).await;
     println!("Stopped.");
+    Ok(())
+}
+
+/// How long stopping may take to restore the buttons. Sleeping devices only
+/// receive the request once they wake up, which can take a moment.
+const RESTORE_LIMIT: Duration = Duration::from_secs(3);
+
+async fn reset() -> Result<()> {
+    use boltkit_core::{config::Config, remap::RemapEngine};
+
+    // Starting with an empty configuration applies the defaults; give the
+    // engine a moment to find the receivers before stopping it.
+    let engine = RemapEngine::start(Config::default());
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    engine.stop(RESTORE_LIMIT).await;
+    println!("Buttons restored.");
     Ok(())
 }
