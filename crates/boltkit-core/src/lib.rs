@@ -5,6 +5,7 @@
 //! the HID transport (via `hidapi`), device enumeration and the higher-level
 //! operations the CLI and the desktop app are built on.
 
+pub mod controls;
 pub mod enumerate;
 pub mod pairing;
 pub mod transport;

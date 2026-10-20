@@ -10,6 +10,7 @@ pub mod device_type_and_name;
 pub mod feature_set;
 pub mod hires_wheel;
 pub mod registry;
+pub mod reprog_controls;
 pub mod root;
 pub mod smartshift;
 pub mod thumbwheel;

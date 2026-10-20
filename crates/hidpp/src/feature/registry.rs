@@ -15,6 +15,7 @@ use crate::{
         device_type_and_name::DeviceTypeAndNameFeature,
         feature_set::FeatureSetFeature,
         hires_wheel::HiResWheelFeature,
+        reprog_controls::ReprogControlsFeature,
         root::RootFeature,
         smartshift::SmartShiftFeature,
         thumbwheel::ThumbwheelFeature,
@@ -271,7 +272,10 @@ lazy_static! {
         }),
         (0x1b04, KnownFeature {
             name: "ReprogControls5",
-            versions: &[]
+            versions: &[FeatureVersion {
+                starting_version: ReprogControlsFeature::STARTING_VERSION,
+                producer: new_dyn::<ReprogControlsFeature>
+            }]
         }),
         (0x1bc0, KnownFeature {
             name: "ReportHidUsages",

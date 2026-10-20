@@ -28,6 +28,12 @@ enum Command {
     /// Pair the first device found in pairing mode.
     Pair,
 
+    /// Show the features and reprogrammable controls of a paired device.
+    Info {
+        /// Slot number as shown by `list`.
+        slot: u8,
+    },
+
     /// Remove the device in the given slot from the receiver.
     Unpair {
         /// Slot number as shown by `list`.
@@ -63,6 +69,7 @@ async fn main() -> Result<()> {
     match cli.command {
         Command::List => list(&api).await,
         Command::Pair => pair(&api).await,
+        Command::Info { slot } => info(&api, slot).await,
         Command::Unpair { slot } => unpair(&api, slot).await,
     }
 }
@@ -213,5 +220,73 @@ async fn unpair(api: &HidApi, slot: u8) -> Result<()> {
         .await
         .with_context(|| format!("could not unpair slot {slot}"))?;
     println!("Unpaired slot {slot} ({name}).");
+    Ok(())
+}
+
+async fn info(api: &HidApi, slot: u8) -> Result<()> {
+    use boltkit_core::{
+        controls::control_name,
+        hidpp::{
+            device::Device,
+            feature::{
+                registry,
+                reprog_controls::{ControlFlags, ReportingFlags, ReprogControlsFeature},
+            },
+        },
+    };
+
+    let (chan, _bolt) = first_bolt(api).await?;
+    let mut device = Device::new(chan, slot)
+        .await
+        .with_context(|| format!("no reachable device in slot {slot} (is it awake?)"))?;
+    println!("Protocol: {:?}", device.protocol_version);
+
+    let features = device
+        .enumerate_features()
+        .await?
+        .context("the device cannot list its features")?;
+    println!("Features:");
+    for f in &features {
+        let name = registry::lookup(f.id).map_or("?", |k| k.name);
+        println!("  {:#06x} v{}  {name}", f.id, f.version);
+    }
+
+    let Some(reprog) = device.get_feature::<ReprogControlsFeature>() else {
+        println!("No reprogrammable controls (feature 0x1b04 missing).");
+        return Ok(());
+    };
+
+    println!("Controls:");
+    for index in 0..reprog.get_count().await? {
+        let c = reprog.get_control_info(index).await?;
+        let r = reprog.get_reporting(c.cid).await?;
+        let name = control_name(c.cid).unwrap_or("?");
+        let mut caps = Vec::new();
+        for (flag, label) in [
+            (ControlFlags::REPROGRAMMABLE, "remap"),
+            (ControlFlags::DIVERTABLE, "divert"),
+            (ControlFlags::PERSISTENTLY_DIVERTABLE, "persist"),
+            (ControlFlags::RAW_XY, "rawxy"),
+        ] {
+            if c.flags.has(flag) {
+                caps.push(label);
+            }
+        }
+        let state = if r.flags.has(ReportingFlags::DIVERTED) {
+            "diverted".to_string()
+        } else if r.mapped_to != c.cid {
+            format!("-> {:#06x}", r.mapped_to)
+        } else {
+            "default".to_string()
+        };
+        println!(
+            "  {:#06x} {name:<22} group={} mask={:#04x} [{}] {state}",
+            c.cid,
+            c.group,
+            c.group_mask,
+            caps.join(",")
+        );
+    }
+
     Ok(())
 }
