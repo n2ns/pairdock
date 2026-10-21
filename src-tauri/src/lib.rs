@@ -9,6 +9,7 @@ use tauri::{
     RunEvent,
     WindowEvent,
     menu::{Menu, MenuItem},
+    webview::PageLoadEvent,
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
 use tauri_plugin_autostart::MacosLauncher;
@@ -38,13 +39,17 @@ pub fn run() {
             let state = AppState::load(app.handle())?;
             app.manage(state);
             build_tray(app.handle())?;
-
-            if std::env::args().any(|arg| arg == MINIMIZED_ARG)
-                && let Some(window) = app.get_webview_window("main")
-            {
-                window.hide()?;
-            }
             Ok(())
+        })
+        // The window starts hidden (see tauri.conf.json) and is shown once the
+        // page has loaded, so the webview's blank white surface never shows.
+        // When started minimized it stays in the tray.
+        .on_page_load(|webview, payload| {
+            if payload.event() == PageLoadEvent::Finished
+                && !std::env::args().any(|arg| arg == MINIMIZED_ARG)
+            {
+                let _ = webview.window().show();
+            }
         })
         .on_window_event(|window, event| {
             // Closing the window keeps boltkit running in the tray; the remapping
@@ -80,12 +85,12 @@ pub fn run() {
 }
 
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, "open", "Open boltkit", true, None::<&str>)?;
+    let open = MenuItem::with_id(app, "open", "Open BoltKit", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &quit_item])?;
 
     let mut tray = TrayIconBuilder::with_id("main")
-        .tooltip("boltkit")
+        .tooltip("BoltKit")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {

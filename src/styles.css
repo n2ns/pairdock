@@ -38,6 +38,7 @@
 
   --radius: 18px;
   --radius-sm: 12px;
+  --radius-control: 8px;
   font-family: "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Microsoft YaHei UI",
     system-ui, sans-serif;
   font-size: 14px;
@@ -179,15 +180,9 @@ button {
 }
 
 .brand strong {
-  display: block;
-  font-size: 16px;
-  letter-spacing: -0.01em;
-}
-
-.brand span {
-  display: block;
-  color: var(--muted);
-  font-size: 11.5px;
+  font-size: 23px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
 }
 
 nav {
@@ -203,7 +198,7 @@ nav {
   gap: 11px;
   padding: 10px 12px;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   background: none;
   cursor: pointer;
   color: var(--muted);
@@ -223,7 +218,7 @@ nav {
 .nav-active {
   position: absolute;
   inset: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   background: var(--surface-solid);
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
@@ -302,7 +297,7 @@ nav {
 
 .notice {
   padding: 10px 14px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   background: var(--accent-soft);
   color: var(--accent);
 }
@@ -327,7 +322,7 @@ nav {
   gap: 6px;
   padding: 8px 16px;
   border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   background: var(--surface-solid);
   cursor: pointer;
   font-weight: 550;
@@ -368,7 +363,6 @@ nav {
 }
 
 .btn-ghost {
-  border-color: transparent;
   background: transparent;
 }
 
@@ -378,6 +372,7 @@ nav {
 }
 
 .btn-ghost.danger {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
   color: var(--danger);
 }
 
@@ -417,7 +412,7 @@ nav {
 .field select {
   padding: 9px 12px;
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   background: var(--surface-solid);
   font: inherit;
   color: inherit;
@@ -514,7 +509,7 @@ nav {
   flex-wrap: wrap;
   gap: 2px;
   padding: 3px;
-  border-radius: 13px;
+  border-radius: var(--radius-control);
   background: var(--surface-sunken);
 }
 
@@ -522,7 +517,7 @@ nav {
   position: relative;
   padding: 7px 14px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: none;
   cursor: pointer;
   color: var(--muted);
@@ -536,7 +531,7 @@ nav {
 .segment-bg {
   position: absolute;
   inset: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--surface-solid);
   box-shadow: var(--shadow);
 }
@@ -788,7 +783,7 @@ nav {
   width: 100%;
   padding: 11px 14px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   background: var(--surface-solid);
   cursor: pointer;
   text-align: left;
@@ -808,6 +803,10 @@ nav {
 
 .control-name {
   font-weight: 600;
+}
+
+.editor-anchor {
+  scroll-margin-top: 16px;
 }
 
 .editor {
@@ -835,7 +834,7 @@ nav {
 .choice {
   padding: 9px 10px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   background: var(--surface-solid);
   cursor: pointer;
   font-weight: 550;
@@ -882,7 +881,7 @@ kbd {
   min-height: 52px;
   padding: 10px;
   border: 1.5px dashed var(--border-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   background: var(--surface-sunken);
   cursor: pointer;
 }
@@ -1048,7 +1047,7 @@ kbd {
   gap: 9px;
   padding: 10px 14px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   background: var(--surface);
   color: var(--muted);
   font-weight: 550;
@@ -1151,7 +1150,7 @@ kbd {
   gap: 12px;
   padding: 12px 14px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   background: var(--surface-solid);
   box-shadow: var(--shadow);
 }
@@ -1187,7 +1186,7 @@ kbd {
   width: 38px;
   height: 46px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   background: var(--surface-solid);
   transition:
     transform 0.25s cubic-bezier(0.3, 1.5, 0.5, 1),
@@ -1630,7 +1629,7 @@ kbd {
     grid-template-columns: 76px 1fr;
   }
 
-  .brand div,
+  .brand strong,
   .nav-label,
   .demo-note {
     display: none;

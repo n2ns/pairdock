@@ -3,7 +3,6 @@
 import { createContext, useContext } from "react";
 
 const en = {
-  appTagline: "Your Logitech receiver, nothing else",
   navDevices: "Devices",
   navPair: "Pair a device",
   navSettings: "Settings",
@@ -43,15 +42,15 @@ const en = {
   actionShortcut: "Shortcut",
   actionDisabled: "Disabled",
   actionDefaultHint: "The button does what it was made for.",
-  actionRemapHint: "Stored on the device. Works even when boltkit is closed, until the device reconnects.",
-  actionShortcutHint: "Sends a key combination while the button is held. Needs boltkit running in the tray.",
-  actionDisabledHint: "The button does nothing. Needs boltkit running in the tray.",
+  actionRemapHint: "Stored on the device. Works even when BoltKit is closed, until the device reconnects.",
+  actionShortcutHint: "Sends a key combination while the button is held. Needs BoltKit running in the tray.",
+  actionDisabledHint: "The button does nothing. Needs BoltKit running in the tray.",
   pressKeys: "Press a key combination…",
   recordShortcut: "Record",
   presets: "Common",
   save: "Save",
   saved: "Saved",
-  needsTray: "Needs boltkit running",
+  needsTray: "Needs BoltKit running",
 
   presetCopy: "Copy",
   presetPaste: "Paste",
@@ -116,17 +115,16 @@ const en = {
 
   settingsTitle: "Settings",
   autostart: "Start with the system",
-  autostartHint: "boltkit starts in the tray so your button shortcuts work right away.",
+  autostartHint: "BoltKit starts in the tray so your button shortcuts work right away.",
   language: "Language",
   languageAuto: "System",
   about: "About",
   aboutText:
-    "boltkit pairs devices and customizes buttons on Logitech receivers using the system's built-in HID driver. Open source under the MIT license.",
-  demoMode: "Demo mode: showing simulated devices because boltkit is running in a browser.",
+    "BoltKit pairs devices and customizes buttons on Logitech receivers using the system's built-in HID driver. Open source under the MIT license.",
+  demoMode: "Demo mode: showing simulated devices because BoltKit is running in a browser.",
 };
 
 const zh: typeof en = {
-  appTagline: "只做配对和按键，干净利落",
   navDevices: "设备",
   navPair: "配对新设备",
   navSettings: "设置",
@@ -165,9 +163,9 @@ const zh: typeof en = {
   actionShortcut: "快捷键",
   actionDisabled: "禁用",
   actionDefaultHint: "按键保持出厂时的功能。",
-  actionRemapHint: "保存在设备上。即使关闭 boltkit 也有效，直到设备重新连接。",
-  actionShortcutHint: "按住按键时发送组合键。需要 boltkit 在托盘中运行。",
-  actionDisabledHint: "按键不再有任何作用。需要 boltkit 在托盘中运行。",
+  actionRemapHint: "保存在设备上。即使关闭 BoltKit 也有效，直到设备重新连接。",
+  actionShortcutHint: "按住按键时发送组合键。需要 BoltKit 在托盘中运行。",
+  actionDisabledHint: "按键不再有任何作用。需要 BoltKit 在托盘中运行。",
   pressKeys: "请按下组合键…",
   recordShortcut: "录制",
   presets: "常用",
@@ -237,12 +235,12 @@ const zh: typeof en = {
 
   settingsTitle: "设置",
   autostart: "开机自动启动",
-  autostartHint: "开机后 boltkit 在托盘中运行，按键快捷键马上可用。",
+  autostartHint: "开机后 BoltKit 在托盘中运行，按键快捷键马上可用。",
   language: "语言",
   languageAuto: "跟随系统",
   about: "关于",
   aboutText:
-    "boltkit 通过系统自带的 HID 驱动，为罗技接收器配对设备、自定义按键。以 MIT 许可证开源。",
+    "BoltKit 通过系统自带的 HID 驱动，为罗技接收器配对设备、自定义按键。以 MIT 许可证开源。",
   demoMode: "演示模式：当前在浏览器中运行，显示的是模拟设备。",
 };
 

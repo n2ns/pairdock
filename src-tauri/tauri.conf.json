@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "boltkit",
+  "productName": "BoltKit",
   "version": "0.1.0",
   "identifier": "dev.boltkit.app",
   "build": {
@@ -13,12 +13,13 @@
     "windows": [
       {
         "label": "main",
-        "title": "boltkit",
+        "title": "BoltKit",
         "width": 1080,
         "height": 720,
         "minWidth": 880,
         "minHeight": 600,
-        "center": true
+        "center": true,
+        "visible": false
       }
     ],
     "security": {

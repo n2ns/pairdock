@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   actionFor,
@@ -29,6 +29,7 @@ export function DeviceDetail({ receiverId, device, onBack }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [savedAt, setSavedAt] = useState(0);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(() => {
     setError(null);
@@ -61,6 +62,16 @@ export function DeviceDetail({ receiverId, device, onBack }: Props) {
   const marked = config
     ? selectable.filter((p) => actionFor(config, device.wpid, partToCid.get(p)!).type !== "default")
     : [];
+
+  // Picking a button on the picture jumps straight to its settings.
+  const selectPart = (part: MousePart) => {
+    const cid = partToCid.get(part);
+    if (cid === undefined) return;
+    setSelected(cid);
+    requestAnimationFrame(() => {
+      if (editorRef.current) scrollToElement(editorRef.current);
+    });
+  };
 
   const apply = async (action: ButtonAction) => {
     if (!control) return;
@@ -122,7 +133,7 @@ export function DeviceDetail({ receiverId, device, onBack }: Props) {
               selected={selectedPart}
               highlight={selectedPart ? [selectedPart] : []}
               marked={marked}
-              onSelect={(p) => setSelected(partToCid.get(p) ?? null)}
+              onSelect={selectPart}
             />
             {(partToCid.has("back") || partToCid.has("forward")) && (
               <div className="side-view">
@@ -134,7 +145,7 @@ export function DeviceDetail({ receiverId, device, onBack }: Props) {
                     selectedPart === "back" || selectedPart === "forward" ? [selectedPart] : []
                   }
                   marked={marked}
-                  onSelect={(p) => setSelected(partToCid.get(p) ?? null)}
+                  onSelect={selectPart}
                 />
               </div>
             )}
@@ -161,6 +172,7 @@ export function DeviceDetail({ receiverId, device, onBack }: Props) {
               ))}
             </ul>
 
+            <div ref={editorRef} className="editor-anchor" />
             <AnimatePresence mode="wait">
               {control && (
                 <motion.div
@@ -199,6 +211,33 @@ export function DeviceDetail({ receiverId, device, onBack }: Props) {
       )}
     </div>
   );
+}
+
+/** Scrolls the nearest scrolling ancestor so `el` sits near its top, with an
+ * eased animation that does not depend on native smooth scrolling. */
+function scrollToElement(el: HTMLElement, offset = 16, duration = 380) {
+  let container = el.parentElement;
+  while (container && !/(auto|scroll)/.test(getComputedStyle(container).overflowY)) {
+    container = container.parentElement;
+  }
+  if (!container) return;
+  const scroller = container;
+
+  const from = scroller.scrollTop;
+  const max = scroller.scrollHeight - scroller.clientHeight;
+  const target =
+    el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + from - offset;
+  const to = Math.max(0, Math.min(max, target));
+  if (Math.abs(to - from) < 2) return;
+
+  const start = performance.now();
+  const step = (now: number) => {
+    const p = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    scroller.scrollTop = from + (to - from) * eased;
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 
 function controlLabel(t: Strings, control: Control | number) {

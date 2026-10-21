@@ -75,7 +75,7 @@ export function Settings({
       <section className="card about">
         <img src="/icon.svg" alt="" width="64" height="64" />
         <div>
-          <h3>boltkit 0.1.0</h3>
+          <h3>BoltKit 0.1.0</h3>
           <p className="muted small">{t.aboutText}</p>
         </div>
       </section>

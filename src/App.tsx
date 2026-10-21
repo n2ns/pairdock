@@ -90,10 +90,7 @@ export default function App() {
         <aside className="sidebar">
           <div className="brand">
             <img src="/icon.svg" alt="" width="36" height="36" />
-            <div>
-              <strong>boltkit</strong>
-              <span>{t.appTagline}</span>
-            </div>
+            <strong>BoltKit</strong>
           </div>
           <nav>
             {nav.map((item) => (

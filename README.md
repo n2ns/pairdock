@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="public/icon.svg" width="112" alt="boltkit icon">
+  <img src="public/icon.svg" width="112" alt="BoltKit icon">
 </p>
 
-<h1 align="center">boltkit</h1>
+<h1 align="center">BoltKit</h1>
 
 <p align="center">
   Pair devices to a Logitech <b>Logi Bolt</b> receiver and customize mouse buttons —<br>
@@ -13,7 +13,7 @@
 
 Logi Options+ is a large suite with dozens of features, background services and an
 updater. If all you need is to pair a keyboard or mouse to your receiver and remap a
-couple of side buttons, boltkit does just that:
+couple of side buttons, BoltKit does just that:
 
 - **Pairing** — discover devices in pairing mode, pair them with an animated guide that
   highlights which mouse button to click next (or which keys to type on a keyboard),
@@ -25,7 +25,7 @@ couple of side buttons, boltkit does just that:
   It answers shutdown requests immediately, so it never shows up as an app that
   "prevents shutdown".
 
-> boltkit is an independent project and is not affiliated with or endorsed by
+> BoltKit is an independent project and is not affiliated with or endorsed by
 > Logitech. "Logitech", "Logi Bolt" and "Logi Options+" are trademarks of Logitech.
 
 ## Status
@@ -43,15 +43,15 @@ Logitech mice expose their buttons through the HID++ feature `0x1b04`
 
 - **remapped** on the device to another button of a compatible group (for example
   Back → Middle). This needs no software running, but the device forgets it when it
-  reconnects, so boltkit re-applies it whenever the device comes online;
-- **diverted**: the device stops sending the button and reports presses to boltkit,
+  reconnects, so BoltKit re-applies it whenever the device comes online;
+- **diverted**: the device stops sending the button and reports presses to BoltKit,
   which then sends the configured shortcut while the button is held. This needs
-  boltkit running in the tray.
+  BoltKit running in the tray.
 
 Most mice (the M650 included) cannot store diversions persistently, which is why
-boltkit keeps a small engine running in the tray. When you quit from the tray menu,
-boltkit restores the buttons first (for up to three seconds, since a sleeping mouse
-only receives the request once it wakes up). If boltkit ever exits without that,
+BoltKit keeps a small engine running in the tray. When you quit from the tray menu,
+BoltKit restores the buttons first (for up to three seconds, since a sleeping mouse
+only receives the request once it wakes up). If BoltKit ever exits without that,
 `boltkit-cli reset` restores every button.
 
 The button settings are stored per device model in `config.json` in the app's
@@ -102,7 +102,7 @@ src                   desktop app UI (React + TypeScript)
 ## Acknowledgements
 
 - [`hidpp`](https://github.com/lus/logy) by Lukas Schulte Pelkum — the HID++
-  implementation boltkit builds on (0BSD).
+  implementation BoltKit builds on (0BSD).
 - [Solaar](https://github.com/pwr-Solaar/Solaar) — the reference for Bolt pairing and
   the `0x1b04` feature.
 
