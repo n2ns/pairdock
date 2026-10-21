@@ -9,7 +9,8 @@ export function BatteryPill({ battery, compact = false }: { battery: Battery; co
   const t = useStrings();
   const percent = battery.percent ?? { critical: 5, low: 20, good: 60, full: 100 }[battery.level];
   return (
-    <div
+    // A span, so that it can sit inside a line of text such as a card's status.
+    <span
       className={`battery battery-${battery.level} ${compact ? "battery-compact" : ""}`}
       title={t.battery}
     >
@@ -23,6 +24,6 @@ export function BatteryPill({ battery, compact = false }: { battery: Battery; co
       </span>
       <span>{battery.percent !== null ? `${battery.percent}%` : t.battery}</span>
       {battery.charging && <span className="muted">· {t.charging}</span>}
-    </div>
+    </span>
   );
 }
