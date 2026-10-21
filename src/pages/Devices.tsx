@@ -9,7 +9,7 @@ import { useStrings } from "../i18n";
 
 interface Props {
   onCustomize: (receiverId: string, device: PairedDevice) => void;
-  onPair: () => void;
+  onPair: (receiverId: string) => void;
 }
 
 export function Devices({ onCustomize, onPair }: Props) {
@@ -31,12 +31,14 @@ export function Devices({ onCustomize, onPair }: Props) {
 
   const unpair = async () => {
     if (!confirm) return;
+    setConfirm(null);
     try {
       await api.unpair(confirm.receiverId, confirm.device.slot);
     } catch (e) {
+      // Reloading would clear the error, so keep the list as it is.
       setError(String(e));
+      return;
     }
-    setConfirm(null);
     load();
   };
 
@@ -127,7 +129,7 @@ export function Devices({ onCustomize, onPair }: Props) {
             </AnimatePresence>
 
             {receiver.supported && receiver.devices.length < 6 && (
-              <button className="card device-card add-card" onClick={onPair}>
+              <button className="card device-card add-card" onClick={() => onPair(receiver.id)}>
                 <span className="add-plus">+</span>
                 <span>{t.pairNew}</span>
               </button>

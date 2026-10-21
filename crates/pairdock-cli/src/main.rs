@@ -341,7 +341,10 @@ async fn reset() -> Result<()> {
     // engine a moment to find the receivers before stopping it.
     let engine = RemapEngine::start(Config::default());
     tokio::time::sleep(Duration::from_secs(2)).await;
-    engine.stop(RESTORE_LIMIT).await;
-    println!("Buttons restored.");
+    if engine.stop(RESTORE_LIMIT).await {
+        println!("Buttons restored.");
+    } else {
+        println!("Some devices did not answer; their buttons return to normal when they reconnect.");
+    }
     Ok(())
 }

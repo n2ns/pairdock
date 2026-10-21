@@ -98,15 +98,63 @@ fn migrate_legacy_autostart(app: &AppHandle) {
     else {
         return;
     };
-    if !legacy.is_enabled().unwrap_or(false) {
-        return;
+    match remove_autostart(&legacy) {
+        Ok(true) => {
+            if let Err(err) = app.autolaunch().enable() {
+                tracing::warn!("could not enable autostart: {err}");
+            }
+        },
+        Ok(false) => {},
+        Err(err) => tracing::warn!("could not remove the old autostart entry: {err}"),
     }
-    if let Err(err) = legacy.disable() {
-        tracing::warn!("could not remove the old autostart entry: {err}");
-        return;
+}
+
+/// Removes an autostart entry, also one the user disabled in Task Manager,
+/// and returns whether it was enabled.
+#[cfg(windows)]
+fn remove_autostart(entry: &auto_launch::AutoLaunch) -> auto_launch::Result<bool> {
+    let enabled = entry.is_enabled()?;
+    entry.disable()?;
+    Ok(enabled)
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use std::process::Command;
+
+    use super::remove_autostart;
+
+    const RUN: &str = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run";
+    const APPROVED: &str =
+        r"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
+
+    fn reg(args: &[&str]) -> bool {
+        Command::new("reg").args(args).output().unwrap().status.success()
     }
-    if let Err(err) = app.autolaunch().enable() {
-        tracing::warn!("could not enable autostart: {err}");
+
+    #[test]
+    fn removes_an_entry_disabled_in_task_manager() {
+        let name = format!("PairDockTest{}", std::process::id());
+        let entry = auto_launch::AutoLaunchBuilder::new()
+            .set_app_name(&name)
+            .set_app_path(r"C:\nonexistent\boltkit.exe")
+            .set_windows_enable_mode(auto_launch::WindowsEnableMode::CurrentUser)
+            .build()
+            .unwrap();
+        entry.enable().unwrap();
+        // What Task Manager writes when the user disables the entry.
+        let disabled = reg(&[
+            "add", APPROVED, "/v", &name, "/t", "REG_BINARY", "/d", "030000000000000001000000", "/f",
+        ]);
+
+        let result = remove_autostart(&entry);
+        let still_there = reg(&["query", RUN, "/v", &name]);
+        let _ = entry.disable();
+        reg(&["delete", APPROVED, "/v", &name, "/f"]);
+
+        assert!(disabled, "could not mark the entry as disabled");
+        assert!(!result.unwrap(), "a disabled entry must not turn PairDock's autostart on");
+        assert!(!still_there, "the entry was left in the Run key");
     }
 }
 

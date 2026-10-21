@@ -308,7 +308,7 @@ function ActionEditor({
 
   const options: { type: ButtonAction["type"]; label: string; enabled: boolean; tray: boolean }[] = [
     { type: "default", label: t.actionDefault, enabled: true, tray: false },
-    { type: "remap", label: t.actionRemap, enabled: control.remappable, tray: false },
+    { type: "remap", label: t.actionRemap, enabled: control.remappable, tray: true },
     { type: "shortcut", label: t.actionShortcut, enabled: control.divertable, tray: true },
     { type: "disabled", label: t.actionDisabled, enabled: control.divertable, tray: true },
   ];

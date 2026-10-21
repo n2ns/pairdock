@@ -6,7 +6,11 @@
 //! engine therefore listens for connection notifications and re-applies the
 //! configuration every time a device comes online.
 
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+    time::Duration,
+};
 
 use enigo::{Direction, Enigo, Keyboard, Settings};
 use hidapi::HidApi;
@@ -42,7 +46,7 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(2);
 pub struct RemapEngine {
     config: watch::Sender<Config>,
     stop: watch::Sender<bool>,
-    task: JoinHandle<()>,
+    task: JoinHandle<bool>,
 }
 
 impl RemapEngine {
@@ -66,17 +70,23 @@ impl RemapEngine {
     /// Restores every touched button to its default behavior and stops.
     ///
     /// Gives up after `limit` so that shutting down never hangs on a device
-    /// that does not answer.
-    pub async fn stop(self, limit: Duration) {
+    /// that does not answer. Returns whether every device was restored.
+    pub async fn stop(self, limit: Duration) -> bool {
         self.stop.send_replace(true);
-        if timeout(limit, self.task).await.is_err() {
-            tracing::warn!("remap engine did not stop within {limit:?}");
+        match timeout(limit, self.task).await {
+            Ok(Ok(restored)) => restored,
+            Ok(Err(_)) => false,
+            Err(_) => {
+                tracing::warn!("remap engine did not stop within {limit:?}");
+                false
+            },
         }
     }
 }
 
-async fn run(config: watch::Receiver<Config>, mut stop: watch::Receiver<bool>, injector: Injector) {
-    let mut receivers: HashMap<String, (watch::Sender<bool>, JoinHandle<()>)> = HashMap::new();
+/// Returns whether every device was restored.
+async fn run(config: watch::Receiver<Config>, mut stop: watch::Receiver<bool>, injector: Injector) -> bool {
+    let mut receivers: HashMap<String, (watch::Sender<bool>, JoinHandle<bool>)> = HashMap::new();
 
     loop {
         match HidApi::new() {
@@ -124,20 +134,29 @@ async fn run(config: watch::Receiver<Config>, mut stop: watch::Receiver<bool>, i
         }
     }
 
-    for (stop, task) in receivers.into_values() {
-        stop.send_replace(true);
-        let _ = task.await;
-    }
+    // Stop all receivers first so that they restore their devices in parallel.
+    let tasks: Vec<_> = receivers
+        .into_values()
+        .map(|(stop, task)| {
+            stop.send_replace(true);
+            task
+        })
+        .collect();
+    futures::future::join_all(tasks)
+        .await
+        .into_iter()
+        .all(|restored| restored.unwrap_or(false))
 }
 
 /// Serves one Bolt receiver until it is unplugged or the engine stops.
+/// Returns whether its devices were restored.
 async fn run_bolt(
     chan: Arc<HidppChannel>,
     bolt: bolt::Receiver,
     mut config: watch::Receiver<Config>,
     mut stop: watch::Receiver<bool>,
     injector: Injector,
-) {
+) -> bool {
     let events = bolt.listen();
     let notifications = bolt::NotificationStateBuilder::default()
         .wireless_notifications(true)
@@ -148,14 +167,14 @@ async fn run_bolt(
     }
 
     let mut devices: HashMap<u8, LiveDevice> = HashMap::new();
+    // Online devices that could not be reached, so their buttons may still
+    // carry settings that stopping cannot restore.
+    let mut unreached: HashSet<u8> = HashSet::new();
 
-    match with_timeout(bolt.collect_paired_devices()).await {
-        Ok(paired) => {
-            for conn in paired.into_iter().filter(|c| c.online) {
-                attach(&chan, &mut devices, conn.index, conn.wpid, &config, &injector).await;
-            }
-        },
-        Err(err) => tracing::warn!("could not list paired devices: {err}"),
+    // The receiver announces every paired device with a connection
+    // notification, which the loop below handles like any other.
+    if let Err(err) = with_timeout(bolt.trigger_device_arrival()).await {
+        tracing::warn!("could not list paired devices: {err}");
     }
 
     let mut liveness = tokio::time::interval(LIVENESS_INTERVAL);
@@ -167,16 +186,21 @@ async fn run_bolt(
             _ = liveness.tick() => {
                 if chan.is_closed() {
                     tracing::info!("receiver disconnected");
-                    return;
+                    return true;
                 }
             },
             event = events.recv() => {
                 let Ok(event) = event else { break };
                 if let bolt::Event::DeviceConnection(conn) = event {
                     if conn.online {
-                        attach(&chan, &mut devices, conn.index, conn.wpid, &config, &injector).await;
+                        if attach(&chan, &mut devices, conn.index, conn.wpid, &config, &injector).await {
+                            unreached.remove(&conn.index);
+                        } else {
+                            unreached.insert(conn.index);
+                        }
                     } else {
                         devices.remove(&conn.index);
+                        unreached.remove(&conn.index);
                     }
                 }
             },
@@ -191,12 +215,34 @@ async fn run_bolt(
         }
     }
 
-    for device in devices.values() {
-        device.apply(&Config::default()).await;
+    // Devices announced but not handled yet were not restored either.
+    while let Ok(event) = events.try_recv() {
+        if let bolt::Event::DeviceConnection(conn) = event {
+            if conn.online {
+                unreached.insert(conn.index);
+            } else {
+                unreached.remove(&conn.index);
+            }
+        }
     }
+
+    restore(devices.values()).await && unreached.is_empty()
 }
 
-/// (Re-)initializes a device that just came online.
+/// Returns every control of `devices` to its default behavior.
+/// Devices are restored concurrently so that one that does not answer cannot
+/// use up the time the others need.
+/// Returns whether all of them answered.
+async fn restore(devices: impl IntoIterator<Item = &LiveDevice>) -> bool {
+    let defaults = Config::default();
+    futures::future::join_all(devices.into_iter().map(|device| device.apply(&defaults)))
+        .await
+        .into_iter()
+        .all(|answered| answered)
+}
+
+/// (Re-)initializes a device that just came online. Returns whether the
+/// device answered.
 async fn attach(
     chan: &Arc<HidppChannel>,
     devices: &mut HashMap<u8, LiveDevice>,
@@ -204,16 +250,23 @@ async fn attach(
     wpid: u16,
     config: &watch::Receiver<Config>,
     injector: &Injector,
-) {
+) -> bool {
     devices.remove(&index);
     match LiveDevice::open(Arc::clone(chan), index, wpid, config.clone(), injector.clone()).await {
         Ok(Some(device)) => {
             let current = config.borrow().clone();
-            device.apply(&current).await;
+            let answered = device.apply(&current).await;
             devices.insert(index, device);
+            answered
         },
-        Ok(None) => tracing::debug!("device {index} has no reprogrammable controls"),
-        Err(err) => tracing::warn!("could not initialize device {index}: {err}"),
+        Ok(None) => {
+            tracing::debug!("device {index} has no reprogrammable controls");
+            true
+        },
+        Err(err) => {
+            tracing::warn!("could not initialize device {index}: {err}");
+            false
+        },
     }
 }
 
@@ -262,8 +315,9 @@ impl LiveDevice {
         }))
     }
 
-    /// Brings every control's reporting in line with `config`.
-    async fn apply(&self, config: &Config) {
+    /// Brings every control's reporting in line with `config`. Returns false
+    /// if the device stopped answering.
+    async fn apply(&self, config: &Config) -> bool {
         for control in &self.controls {
             let action = config.action(self.wpid, control.cid);
             let divertable = control.flags.has(ControlFlags::DIVERTABLE);
@@ -286,16 +340,23 @@ impl LiveDevice {
                 continue;
             }
 
-            if let Err(err) =
-                with_timeout(self.reprog.set_reporting(control.cid, divert, None, None, remap)).await
-            {
-                tracing::warn!(
+            let request = self.reprog.set_reporting(control.cid, divert, None, None, remap);
+            match timeout(REQUEST_TIMEOUT, request).await {
+                Ok(Ok(())) => {},
+                Ok(Err(err)) => tracing::warn!(
                     "device {}: could not configure control {:#06x}: {err}",
                     self.index,
                     control.cid
-                );
+                ),
+                // An asleep device would let every remaining control time out
+                // as well; it is configured again when it comes back online.
+                Err(_) => {
+                    tracing::warn!("device {} did not answer", self.index);
+                    return false;
+                },
             }
         }
+        true
     }
 }
 
@@ -308,7 +369,11 @@ async fn handle_presses(
 ) {
     // Shortcuts currently held down, by control. Releases use the shortcut
     // that was pressed even if the configuration changed in between.
-    let mut held: HashMap<u16, Shortcut> = HashMap::new();
+    let mut held = HeldShortcuts {
+        keys: HashMap::new(),
+        injector: injector.clone(),
+    };
+    let held = &mut held.keys;
 
     while let Ok(event) = events.recv().await {
         let ReprogControlsEvent::DivertedButtons(pressed) = event else {
@@ -338,9 +403,20 @@ async fn handle_presses(
             }
         }
     }
+}
 
-    for shortcut in held.into_values() {
-        injector.release(shortcut);
+/// Releases the shortcuts still held down when the listener ends, including
+/// when it is aborted because the device went away.
+struct HeldShortcuts {
+    keys: HashMap<u16, Shortcut>,
+    injector: Injector,
+}
+
+impl Drop for HeldShortcuts {
+    fn drop(&mut self) {
+        for (_, shortcut) in self.keys.drain() {
+            self.injector.release(shortcut);
+        }
     }
 }
 
@@ -402,23 +478,227 @@ impl Injector {
 #[cfg(test)]
 mod tests {
     use std::{
+        collections::VecDeque,
         error::Error,
         sync::{
-            Arc,
+            Arc, Condvar, Mutex,
             atomic::{AtomicBool, Ordering},
         },
-        time::Duration,
+        time::{Duration, Instant},
     };
 
+    use enigo::Direction;
     use hidpp::{
         async_trait,
         channel::{HidppChannel, RawHidChannel},
+        feature::{
+            CreatableFeature,
+            reprog_controls::{ControlFlags, ControlInfo, ReprogControlsEvent, ReprogControlsFeature},
+        },
         receiver::{Receiver, detect},
     };
     use tokio::sync::watch;
 
-    use super::{Injector, run_bolt};
-    use crate::config::Config;
+    use super::{Injector, LiveDevice, RemapEngine, handle_presses, restore, run_bolt};
+    use crate::config::{ButtonAction, Config};
+
+    /// A Bolt receiver that answers its own requests and those of the devices
+    /// in `answering` by echoing them, and records every report it is sent.
+    /// Triggering device arrival announces the devices in `online`.
+    struct ScriptedReceiver {
+        answering: Vec<u8>,
+        online: Vec<u8>,
+        sent: Arc<Mutex<Vec<Vec<u8>>>>,
+        inbox: (Mutex<VecDeque<Vec<u8>>>, Condvar),
+    }
+
+    impl ScriptedReceiver {
+        fn new(answering: Vec<u8>, online: Vec<u8>) -> (Self, Arc<Mutex<Vec<Vec<u8>>>>) {
+            let sent = Arc::new(Mutex::new(Vec::new()));
+            let receiver = Self {
+                answering,
+                online,
+                sent: Arc::clone(&sent),
+                inbox: Default::default(),
+            };
+            (receiver, sent)
+        }
+    }
+
+    #[async_trait]
+    impl RawHidChannel for ScriptedReceiver {
+        fn vendor_id(&self) -> u16 {
+            0x046d
+        }
+
+        fn product_id(&self) -> u16 {
+            0xc548
+        }
+
+        async fn write_report(&self, src: &[u8]) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            self.sent.lock().unwrap().push(src.to_vec());
+            let (queue, ready) = &self.inbox;
+            let mut queue = queue.lock().unwrap();
+            if src[1] == 0xff && src[2] == 0x80 && src[3] == 0x02 {
+                // Device arrival: one "mouse B02A online" notification each.
+                for &index in &self.online {
+                    queue.push_back(vec![0x10, index, 0x41, 0x04, 0x02, 0x2a, 0xb0]);
+                }
+            }
+            if src[1] == 0xff || self.answering.contains(&src[1]) {
+                queue.push_back(src.to_vec());
+            }
+            ready.notify_all();
+            Ok(src.len())
+        }
+
+        async fn read_report(&self, buf: &mut [u8]) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            let (queue, ready) = &self.inbox;
+            let mut queue = queue.lock().unwrap();
+            if queue.is_empty() {
+                queue = ready.wait_timeout(queue, Duration::from_millis(50)).unwrap().0;
+            }
+            match queue.pop_front() {
+                Some(report) => {
+                    buf[..report.len()].copy_from_slice(&report);
+                    Ok(report.len())
+                },
+                None => Ok(0),
+            }
+        }
+
+        fn supports_short_long_hidpp(&self) -> Option<(bool, bool)> {
+            Some((true, true))
+        }
+
+        async fn get_report_descriptor(
+            &self,
+            _buf: &mut [u8],
+        ) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            unreachable!()
+        }
+    }
+
+    fn sent_to(sent: &Mutex<Vec<Vec<u8>>>, index: u8) -> usize {
+        sent.lock().unwrap().iter().filter(|r| r[1] == index).count()
+    }
+
+    /// A device with `controls` divertable controls.
+    fn live_device(chan: &Arc<HidppChannel>, index: u8, controls: u16) -> LiveDevice {
+        LiveDevice {
+            index,
+            wpid: 0xb02a,
+            reprog: Arc::new(ReprogControlsFeature::new(Arc::clone(chan), index, 0x08)),
+            controls: (0..controls)
+                .map(|i| ControlInfo {
+                    cid: 0x53 + i,
+                    task_id: 0,
+                    flags: ControlFlags(ControlFlags::DIVERTABLE),
+                    position: 0,
+                    group: 0,
+                    group_mask: 0,
+                })
+                .collect(),
+            listener: tokio::spawn(async {}),
+        }
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn stopping_the_listener_releases_held_shortcuts() {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let mut config = Config::default();
+        config.devices.entry(0xb02a).or_default().buttons.insert(0x53, ButtonAction::Shortcut {
+            keys: "Ctrl+C".into(),
+        });
+        let (_config_tx, config_rx) = watch::channel(config);
+        let (events_tx, events_rx) = async_channel::unbounded();
+        let listener = tokio::spawn(handle_presses(events_rx, 0xb02a, config_rx, Injector(tx)));
+
+        events_tx.send(ReprogControlsEvent::DivertedButtons(vec![0x53])).await.unwrap();
+        let (_, direction) = rx.recv_timeout(Duration::from_secs(1)).unwrap();
+        assert_eq!(direction, Direction::Press);
+
+        // The device goes offline while the button is held down.
+        listener.abort();
+        let _ = listener.await;
+        let (_, direction) = rx
+            .recv_timeout(Duration::from_secs(1))
+            .expect("the held shortcut was never released");
+        assert_eq!(direction, Direction::Release);
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn a_silent_device_does_not_hold_up_restoring_the_others() {
+        let (receiver, sent) = ScriptedReceiver::new(vec![2], vec![]);
+        let chan = Arc::new(HidppChannel::from_raw_channel(receiver).await.unwrap());
+        let asleep = live_device(&chan, 1, 3);
+        let awake = live_device(&chan, 2, 1);
+
+        let started = Instant::now();
+        let finished = tokio::time::timeout(Duration::from_secs(3), restore([&asleep, &awake])).await;
+
+        assert_eq!(sent_to(&sent, 2), 1, "the awake device was not restored");
+        let restored = finished.unwrap_or_else(|_| panic!("restoring took {:?}", started.elapsed()));
+        assert!(!restored, "the asleep device was reported as restored");
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn a_device_that_never_answered_is_not_reported_as_restored() {
+        let (receiver, _sent) = ScriptedReceiver::new(vec![], vec![1]);
+        let chan = Arc::new(HidppChannel::from_raw_channel(receiver).await.unwrap());
+        let Some(Receiver::Bolt(bolt)) = detect(Arc::clone(&chan)) else {
+            panic!("not detected as a Bolt receiver");
+        };
+
+        let (_config_tx, config_rx) = watch::channel(Config::default());
+        let (stop_tx, stop_rx) = watch::channel(false);
+        let task = tokio::spawn(run_bolt(chan, bolt, config_rx, stop_rx, Injector::spawn()));
+
+        // Device 1 is announced online but never answers, so it is not attached.
+        tokio::time::sleep(Duration::from_secs(3)).await;
+        stop_tx.send_replace(true);
+        let restored = tokio::time::timeout(Duration::from_secs(3), task).await.unwrap().unwrap();
+        assert!(!restored, "a device that was never reached was reported as restored");
+    }
+
+    #[tokio::test]
+    async fn stop_reports_devices_that_were_not_restored() {
+        let engine = RemapEngine {
+            config: watch::channel(Config::default()).0,
+            stop: watch::channel(false).0,
+            task: tokio::spawn(async { false }),
+        };
+        assert!(!engine.stop(Duration::from_secs(1)).await);
+    }
+
+    #[tokio::test]
+    async fn stop_reports_restoring_that_did_not_finish() {
+        let engine = RemapEngine {
+            config: watch::channel(Config::default()).0,
+            stop: watch::channel(false).0,
+            task: tokio::spawn(std::future::pending()),
+        };
+        assert!(!engine.stop(Duration::from_millis(10)).await);
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn a_device_online_at_startup_is_initialized_once() {
+        let (receiver, sent) = ScriptedReceiver::new(vec![], vec![1]);
+        let chan = Arc::new(HidppChannel::from_raw_channel(receiver).await.unwrap());
+        let Some(Receiver::Bolt(bolt)) = detect(Arc::clone(&chan)) else {
+            panic!("not detected as a Bolt receiver");
+        };
+
+        let (_config_tx, config_rx) = watch::channel(Config::default());
+        let (_stop_tx, stop_rx) = watch::channel(false);
+        let task = tokio::spawn(run_bolt(chan, bolt, config_rx, stop_rx, Injector::spawn()));
+
+        // The device never answers, so each initialization is one request
+        // that times out after two seconds.
+        tokio::time::sleep(Duration::from_secs(5)).await;
+        task.abort();
+        assert_eq!(sent_to(&sent, 1), 1);
+    }
 
     /// A Bolt receiver that never answers and can be "unplugged", after which
     /// every read fails like a vanished HID handle.

@@ -49,7 +49,7 @@ it does:
 | Action | What it does | Needs PairDock running |
 |---|---|---|
 | Default | The button's original function | No |
-| Another button | Performs another button's action, stored on the mouse | No |
+| Another button | Performs another button's action, stored on the mouse | Yes, in the tray |
 | Shortcut | Sends a key combination such as `Ctrl+C` or `Alt+Left` while held | Yes, in the tray |
 | Disabled | The button does nothing | Yes, in the tray |
 
@@ -94,8 +94,8 @@ are paired in the Windows Bluetooth settings.
 receiver, not on the computer.
 
 **Do shortcuts work when PairDock is closed?** Shortcuts and disabled buttons need PairDock
-running in the tray. Buttons mapped to another button keep working until the device
-reconnects. Closing the window keeps PairDock in the tray; use **Quit** in the tray menu to
+running in the tray. Buttons mapped to another button are stored on the mouse, but the
+mouse forgets them when it reconnects and PairDock sets them again. Closing the window keeps PairDock in the tray; use **Quit** in the tray menu to
 exit, which restores the buttons first.
 
 ## Contributing

@@ -106,22 +106,48 @@ impl AppState {
     }
 
     /// Stops pairing and the engine, restoring buttons within `limit`.
+    /// Both run side by side, each bounded by `limit`.
     pub async fn shutdown(&self, limit: Duration) {
-        if let Some(pairing) = self.pairing.lock().await.take() {
-            let _ = pairing.session.finish().await;
-        }
+        let pairing = tokio::time::timeout(limit, async {
+            if let Some(pairing) = self.pairing.lock().await.take() {
+                let _ = pairing.session.finish().await;
+            }
+        });
         let engine = self.engine.lock().unwrap().take();
-        if let Some(engine) = engine {
-            engine.stop(limit).await;
-        }
+        let engine = async {
+            if let Some(engine) = engine {
+                engine.stop(limit).await;
+            }
+        };
+        let _ = tokio::join!(pairing, engine);
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
+    use std::{
+        collections::VecDeque,
+        error::Error,
+        fs,
+        path::PathBuf,
+        sync::{
+            Arc, Condvar, Mutex,
+            atomic::{AtomicBool, Ordering},
+        },
+        time::Duration,
+    };
 
-    use super::{LEGACY_IDENTIFIER, migrate_legacy_config};
+    use pairdock_core::{
+        config::Config,
+        hidpp::{
+            async_trait,
+            channel::{HidppChannel, RawHidChannel},
+            receiver::detect,
+        },
+        pairing::BoltPairing,
+    };
+
+    use super::{AppState, LEGACY_IDENTIFIER, PairingSession, migrate_legacy_config};
 
     #[test]
     fn copies_the_legacy_config_once() {
@@ -151,5 +177,88 @@ mod tests {
 
         migrate_legacy_config(&current);
         assert!(!current.exists());
+    }
+
+    /// A Bolt receiver that echoes every request until it is told to stop
+    /// answering.
+    struct Receiver {
+        silent: Arc<AtomicBool>,
+        inbox: (Mutex<VecDeque<Vec<u8>>>, Condvar),
+    }
+
+    #[async_trait]
+    impl RawHidChannel for Receiver {
+        fn vendor_id(&self) -> u16 {
+            0x046d
+        }
+
+        fn product_id(&self) -> u16 {
+            0xc548
+        }
+
+        async fn write_report(&self, src: &[u8]) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            if !self.silent.load(Ordering::SeqCst) {
+                let (queue, ready) = &self.inbox;
+                queue.lock().unwrap().push_back(src.to_vec());
+                ready.notify_all();
+            }
+            Ok(src.len())
+        }
+
+        async fn read_report(&self, buf: &mut [u8]) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            let (queue, ready) = &self.inbox;
+            let mut queue = queue.lock().unwrap();
+            if queue.is_empty() {
+                queue = ready.wait_timeout(queue, Duration::from_millis(50)).unwrap().0;
+            }
+            match queue.pop_front() {
+                Some(report) => {
+                    buf[..report.len()].copy_from_slice(&report);
+                    Ok(report.len())
+                },
+                None => Ok(0),
+            }
+        }
+
+        fn supports_short_long_hidpp(&self) -> Option<(bool, bool)> {
+            Some((true, true))
+        }
+
+        async fn get_report_descriptor(
+            &self,
+            _buf: &mut [u8],
+        ) -> Result<usize, Box<dyn Error + Sync + Send>> {
+            unreachable!()
+        }
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn quitting_while_pairing_is_bounded() {
+        let silent = Arc::new(AtomicBool::new(false));
+        let receiver = Receiver {
+            silent: Arc::clone(&silent),
+            inbox: Default::default(),
+        };
+        let chan = Arc::new(HidppChannel::from_raw_channel(receiver).await.unwrap());
+        let Some(hidpp::receiver::Receiver::Bolt(bolt)) = detect(Arc::clone(&chan)) else {
+            panic!("not detected as a Bolt receiver");
+        };
+        let (session, _events) = BoltPairing::start(bolt).await.unwrap();
+        let state = AppState {
+            config_path: PathBuf::new(),
+            config: Mutex::new(Config::default()),
+            engine: Mutex::new(None),
+            pairing: tokio::sync::Mutex::new(Some(PairingSession {
+                session,
+                _chan: chan,
+                discovered: Default::default(),
+            })),
+        };
+
+        // The receiver hangs while the user quits.
+        silent.store(true, Ordering::SeqCst);
+        tokio::time::timeout(Duration::from_secs(2), state.shutdown(Duration::from_millis(500)))
+            .await
+            .expect("quitting waited for the receiver beyond the limit");
     }
 }

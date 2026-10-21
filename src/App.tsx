@@ -12,7 +12,7 @@ import { type Appearance, applyAppearance, storeAppearance, storedAppearance } f
 type Route =
   | { name: "devices" }
   | { name: "device"; receiverId: string; device: PairedDevice }
-  | { name: "pair" }
+  | { name: "pair"; receiverId?: string }
   | { name: "settings" };
 
 const LANGUAGE_KEY = "pairdock.language";
@@ -130,7 +130,10 @@ export default function App() {
               transition={{ duration: 0.22, ease: "easeOut" }}
             >
               {route.name === "devices" && (
-                <Devices onCustomize={customize} onPair={() => setRoute({ name: "pair" })} />
+                <Devices
+                  onCustomize={customize}
+                  onPair={(receiverId) => setRoute({ name: "pair", receiverId })}
+                />
               )}
               {route.name === "device" && (
                 <DeviceDetail
@@ -140,7 +143,11 @@ export default function App() {
                 />
               )}
               {route.name === "pair" && (
-                <PairWizard onDone={() => setRoute({ name: "devices" })} onCustomize={customize} />
+                <PairWizard
+                  receiverId={route.receiverId}
+                  onDone={() => setRoute({ name: "devices" })}
+                  onCustomize={customize}
+                />
               )}
               {route.name === "settings" && (
                 <Settings

@@ -106,7 +106,7 @@ what it does:
 | Action | What it does |
 |---|---|
 | **Default** | The button's original function. |
-| **Another button** | The button performs another button's action, for example *Back → Middle button*. The mouse stores this itself, so it keeps working while PairDock is closed, until the mouse reconnects. Only buttons the mouse allows are offered. |
+| **Another button** | The button performs another button's action, for example *Back → Middle button*. The mouse stores this itself, but forgets it when it reconnects, so PairDock sets it again. Needs PairDock running in the tray. Only buttons the mouse allows are offered. |
 | **Shortcut** | The button sends a key combination while you hold it. Pick one of the common shortcuts, or click **Record** and press the combination. Needs PairDock running in the tray. |
 | **Disabled** | The button does nothing. Needs PairDock running in the tray. |
 
@@ -135,6 +135,8 @@ changed.
   once it wakes, so PairDock waits up to three seconds.
 - When Windows shuts down, PairDock exits at once; the mouse starts fresh the next time the
   receiver powers up.
+
+The tray menu is in English only for now: **Open PairDock** (opens the window) and **Quit**.
 
 ## Troubleshooting
 

@@ -26,8 +26,8 @@ pub enum ButtonAction {
     #[default]
     Default,
 
-    /// Perform another control's action. Stored on the device, so it keeps
-    /// working without pairdock running (until the device reconnects).
+    /// Perform another control's action. Stored on the device, which forgets
+    /// it when it reconnects, so pairdock sets it again.
     Remap { to: u16 },
 
     /// Send a keyboard shortcut such as `Ctrl+C` while the button is held.

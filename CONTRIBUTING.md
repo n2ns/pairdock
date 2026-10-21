@@ -43,7 +43,7 @@ pairdock-cli reset                   # return every button to its default
 Requirements:
 
 - Rust (stable, edition 2024)
-- Node.js 20 or newer
+- Node.js 20.19 or newer (or 22.12 or newer)
 - The [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your platform (on
   Windows: the Microsoft C++ Build Tools and WebView2)
 

@@ -17,11 +17,13 @@ import { useStrings } from "../i18n";
 type Phase = "prepare" | "search" | "confirm" | "success" | "failed";
 
 interface Props {
+  /** The receiver to preselect, when started from its card. */
+  receiverId?: string;
   onDone: () => void;
   onCustomize: (receiverId: string, device: PairedDevice) => void;
 }
 
-export function PairWizard({ onDone, onCustomize }: Props) {
+export function PairWizard({ receiverId: preselected, onDone, onCustomize }: Props) {
   const t = useStrings();
   const [receivers, setReceivers] = useState<ReceiverSummary[] | null>(null);
   const [receiverId, setReceiverId] = useState<string | null>(null);
@@ -42,7 +44,8 @@ export function PairWizard({ onDone, onCustomize }: Props) {
       .then((list) => {
         const supported = list.filter((r) => r.supported);
         setReceivers(supported);
-        setReceiverId(supported[0]?.id ?? null);
+        const initial = supported.find((r) => r.id === preselected) ?? supported[0];
+        setReceiverId(initial?.id ?? null);
       })
       .catch((e) => setError(String(e)));
   }, []);
@@ -149,6 +152,7 @@ export function PairWizard({ onDone, onCustomize }: Props) {
             <Prepare
               receivers={receivers}
               receiverId={receiverId}
+              error={error}
               onReceiver={setReceiverId}
               onStart={start}
             />
@@ -176,11 +180,13 @@ export function PairWizard({ onDone, onCustomize }: Props) {
 function Prepare({
   receivers,
   receiverId,
+  error,
   onReceiver,
   onStart,
 }: {
   receivers: ReceiverSummary[] | null;
   receiverId: string | null;
+  error: string | null;
   onReceiver: (id: string) => void;
   onStart: () => void;
 }) {
@@ -215,6 +221,7 @@ function Prepare({
           </label>
         )}
         {receivers && receivers.length === 0 && <p className="notice">{t.noReceiverForPairing}</p>}
+        {!receivers && error && <p className="notice">{error}</p>}
         <button className="btn btn-primary btn-lg" disabled={!receiverId} onClick={onStart}>
           {t.startSearch}
         </button>
@@ -300,7 +307,7 @@ function Confirm({
     const total = prompt.value.length;
     return (
       <div className="stage-center">
-        <h2>{presses >= total ? t.pressEnter : t.confirmTypeTitle}</h2>
+        <h2>{submitted ? t.waitingDevice : presses >= total ? t.pressEnter : t.confirmTypeTitle}</h2>
         <p className="muted">{t.confirmTypeSubtitle}</p>
         <PasskeyKeys digits={prompt.value} done={Math.min(presses, total)} />
         <p className="progress-text">{t.progress(Math.min(presses, total), total)}</p>
