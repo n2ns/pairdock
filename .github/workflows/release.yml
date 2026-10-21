@@ -1,0 +1,37 @@
+name: Release
+
+# Push a tag such as v0.0.1 to build the Windows installers and draft a release.
+# Review the draft on GitHub, then publish it.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: PairDock ${{ github.ref_name }}
+          releaseBody: See [CHANGELOG.md](https://github.com/n2ns/pairdock/blob/main/CHANGELOG.md) for what changed.
+          releaseDraft: true
+          prerelease: false

@@ -1,0 +1,45 @@
+name: Bug report
+description: Something does not work as described in the user guide
+labels: [bug]
+body:
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: The model of the mouse or keyboard, as printed on it or shown in PairDock.
+      placeholder: Logi M650
+    validations:
+      required: true
+  - type: dropdown
+    id: receiver
+    attributes:
+      label: Receiver
+      options:
+        - Logi Bolt
+        - Unifying
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: PairDock and Windows versions
+      description: The PairDock version is shown at the bottom of Settings.
+      placeholder: PairDock 0.0.1, Windows 11 24H2
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: trace
+    attributes:
+      label: Protocol trace
+      description: >
+        For pairing and button problems, attach a trace recorded with
+        `pairdock-cli --trace trace.log ...` (see CONTRIBUTING.md). It contains device
+        serial numbers and pairing codes; remove anything you do not want to share.

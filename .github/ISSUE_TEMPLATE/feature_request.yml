@@ -1,0 +1,15 @@
+name: Feature request
+description: Suggest an improvement or support for another device or receiver
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like PairDock to do?
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and receiver, if it is about hardware support
+      placeholder: Logi MX Master 3S on a Unifying receiver
