@@ -1,6 +1,7 @@
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { useEffect, useState } from "react";
 
+import { version } from "../../package.json";
 import { isTauri } from "../api";
 import { type Language, useStrings } from "../i18n";
 import type { Appearance } from "../theme";
@@ -104,7 +105,7 @@ export function Settings({
       <section className="card about">
         <img src="/icon.svg" alt="" width="64" height="64" />
         <div>
-          <h3>PairDock 0.1.0</h3>
+          <h3>PairDock {version}</h3>
           <p className="muted small">{t.aboutText}</p>
         </div>
       </section>

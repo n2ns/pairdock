@@ -1,7 +1,13 @@
 {
   "name": "pairdock",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.0.1",
+  "description": "Pair and configure devices on Logitech receivers without Logi Options+",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/n2ns/pairdock.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +18,6 @@
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",
     "@tauri-apps/plugin-autostart": "^2.7.0",
-    "@tauri-apps/plugin-opener": "^2.7.2",
     "motion": "^14.4.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"

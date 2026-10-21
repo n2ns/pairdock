@@ -1,9 +1,10 @@
 [package]
 name = "pairdock-cli"
-version = "0.1.0"
+version.workspace = true
 description = "Command-line interface for pairdock"
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 
 [[bin]]
 name = "pairdock-cli"

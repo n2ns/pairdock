@@ -1,9 +1,10 @@
 [package]
 name = "pairdock"
-version = "0.1.0"
+version.workspace = true
 description = "Pair and configure Logitech Bolt/Unifying devices without Logi Options+"
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -19,7 +20,6 @@ tauri-build = { version = "2.7.3", features = [] }
 
 [dependencies]
 tauri = { version = "2.12.4", features = ["tray-icon", "image-png"] }
-tauri-plugin-opener = "2.7.2"
 tauri-plugin-autostart = "2.7.0"
 tauri-plugin-single-instance = "2.5.4"
 serde.workspace = true

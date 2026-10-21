@@ -1,9 +1,10 @@
 [package]
 name = "pairdock-core"
-version = "0.1.0"
+version.workspace = true
 description = "Receiver pairing and device configuration for Logitech HID++ devices"
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 
 [dependencies]
 hidpp.workspace = true

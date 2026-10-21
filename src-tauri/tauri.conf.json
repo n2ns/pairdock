@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "PairDock",
-  "version": "0.1.0",
+  "version": "../package.json",
   "identifier": "dev.pairdock.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -36,6 +36,10 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "shortDescription": "Pair and configure Logitech receivers without Logi Options+"
+    "shortDescription": "Pair and configure Logitech receivers without Logi Options+",
+    "publisher": "PairDock contributors",
+    "homepage": "https://github.com/n2ns/pairdock",
+    "copyright": "Copyright (c) 2026 PairDock contributors",
+    "license": "MIT"
   }
 }

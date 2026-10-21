@@ -34,7 +34,6 @@ pub fn run() {
             MacosLauncher::LaunchAgent,
             Some(vec![MINIMIZED_ARG]),
         ))
-        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             #[cfg(windows)]
             migrate_legacy_autostart(app.handle());
