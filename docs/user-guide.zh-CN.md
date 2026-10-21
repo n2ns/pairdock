@@ -9,6 +9,7 @@
 - [自定义按键](#自定义按键)
 - [设置](#设置)
 - [托盘与退出](#托盘与退出)
+- [macOS](#macos)
 - [故障排查](#故障排查)
 - [卸载](#卸载)
 
@@ -115,6 +116,58 @@ Bolt 设备需要用一串简短的确认码来完成配对，防止附近的人
 
 托盘菜单目前只有英文：**Open PairDock**（打开窗口）和 **Quit**（退出）。
 
+## macOS
+
+在 Mac 上，PairDock 的用法和 Windows 基本相同，区别如下。已在 Intel Mac 的 macOS 15 Sequoia 上测试，尚未测试的部分见[尚未在 macOS 上测试](#尚未在-macos-上测试)。
+
+### 安装与首次启动
+
+1. Apple 芯片的 Mac 下载 `PairDock_x.y.z_aarch64.dmg`，Intel 芯片的 Mac 下载 `PairDock_x.y.z_x64.dmg`。打开后把 **PairDock** 拖进"应用程序"。
+2. 打开 PairDock。它暂时没有 Apple Developer ID 签名，也没有经过公证，所以 macOS 会拦下第一次启动。打开**系统设置 → 隐私与安全性**，向下滚动，点击**仍要打开**，再点**打开**确认（[Apple 的说明](https://support.apple.com/zh-cn/102445)）。之后就能正常打开。
+
+### 菜单栏
+
+PairDock 在菜单栏里运行，不出现在程序坞中。点击它的图标（一只带轨道环的鼠标）会弹出菜单：**Open PairDock**（打开窗口）和 **Quit**（退出）。关闭窗口时 PairDock 继续运行；从"应用程序"里再次打开 PairDock 会显示窗口。
+
+### 允许发送快捷键
+
+macOS 只允许拥有**辅助功能**权限的应用发送按键。配对、"改成其他按键"和"禁用"不需要这个权限。
+
+1. 把某个按键设为**快捷键**。缺少权限时，PairDock 会显示提示。
+2. 点击**授权…**，在弹出的对话框里点**打开系统设置**。
+3. 在**隐私与安全性 → 辅助功能**里打开 **PairDock** 的开关。
+
+提示会在两秒内消失，快捷键立即可用，不需要重启 PairDock。
+
+**每次更新后都要重新授权。** 没有 Developer ID 签名时，macOS 会把每个新版本当成另一个应用，旧的开关即使还显示为打开也不再生效。请在列表里选中 PairDock 点 **−** 删除（或者在"终端"中运行 `tccutil reset Accessibility dev.pairdock.desktop`），再按上面的步骤重新授权。
+
+### 快捷键
+
+常用快捷键使用 Mac 的按键：**复制** `Cmd+C`、**粘贴** `Cmd+V`、**撤销** `Cmd+Z`、**浏览器后退 / 前进** `Cmd+[` / `Cmd+]`、**显示桌面** `F11`、**调度中心** `Ctrl+Up`、**截图** `Cmd+Shift+4`。录制的快捷键显示为 **Cmd** 和 **Option**。
+
+字母和数字按美式键盘上的位置发送，这是 macOS 给按键编号的方式。如果使用 AZERTY、Dvorak 等会改变字母位置的布局，像 `Cmd+Z` 这样的常用快捷键按下的是美式键盘上 Z 所在位置的那个键。
+
+### 退出
+
+和 Windows 一样，菜单里的 **Quit** 会先把所有按键恢复为默认功能再退出。
+
+### 卸载
+
+先在设置里关闭**开机自动启动**，再退出 PairDock，把它从"应用程序"拖到废纸篓。如果要清除全部痕迹，再删除：
+
+- `~/Library/Application Support/dev.pairdock.desktop`：按键设置（`config.json`）
+- `~/Library/WebKit/dev.pairdock.desktop` 和 `~/Library/Caches/dev.pairdock.desktop`：窗口数据（语言和外观）
+- `~/Library/LaunchAgents/PairDock.plist`：开机启动项（如果还在）
+
+并在**系统设置 → 隐私与安全性 → 辅助功能**里移除 PairDock。
+
+### 尚未在 macOS 上测试
+
+- Apple 芯片的 Mac。
+- **开机自动启动**。
+- 在窗口里安装更新。
+- 配对键盘（Windows 上同样尚未测试）。
+
 ## 故障排查
 
 **提示"没有找到罗技接收器"**：把接收器插到电脑的 USB 口上，然后点击**刷新**。Unifying 接收器能被识别，但暂时还不能使用。
@@ -126,6 +179,8 @@ Bolt 设备需要用一串简短的确认码来完成配对，防止附近的人
 **配对在最后一步失败**：左右键要在完全同一时刻按下。如果其中一个键按早了一点，会被当成多点了一下。
 
 **快捷键不起作用了**：PairDock 必须在运行，看看托盘里有没有它的图标，没有就重新启动。如果 Logi Options+ 也在运行，请退出它。
+
+**快捷键只在某个窗口里不起作用**：Windows 不允许普通程序向以管理员身份运行的窗口（例如任务管理器）发送按键（见 [SendInput](https://learn.microsoft.com/zh-cn/windows/win32/api/winuser/nf-winuser-sendinput)）。切换到其他窗口后，PairDock 的快捷键会恢复正常。
 
 **PairDock 崩溃后某个按键没反应了**：PairDock 没来得及把按键恢复成默认功能。启动 PairDock 后从托盘菜单退出一次，或者把鼠标关机再开机。
 

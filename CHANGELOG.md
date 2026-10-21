@@ -4,6 +4,20 @@ All notable changes to PairDock are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- macOS support: pairing, unpairing and button settings, a menu bar app without a Dock icon,
+  a notice that leads to the Accessibility permission needed for shortcuts, and shortcut presets
+  with Mac keys. Releases include `.dmg` files for Apple silicon and Intel Macs and update files
+  for both.
+
+### Changed
+
+- A smaller window and interface (85 %) and a narrower sidebar, to fit laptop screens; the mouse
+  picture on the button settings page is smaller, leaving more room for the settings.
+
 ## [0.0.1] - 2026-10-21
 
 First public version.

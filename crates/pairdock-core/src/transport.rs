@@ -1,10 +1,11 @@
 //! HID transport built on `hidapi`.
 //!
 //! Logitech exposes HID++ through vendor-defined HID collections. On Windows
-//! (and macOS) the short (7 byte) and long (20 byte) report collections show
-//! up as two separate HID interfaces, so one [`HidappChannel`] may own up to
-//! two `hidapi` handles and routes each report to the handle that supports
-//! its report ID.
+//! the short (7 byte) and long (20 byte) report collections show up as two
+//! separate HID interfaces, so one [`HidappChannel`] may own up to two
+//! `hidapi` handles and routes each report to the handle that supports its
+//! report ID. On macOS both collections share one device path, which is then
+//! opened once and serves both report lengths.
 
 use std::{
     error::Error,
@@ -33,8 +34,8 @@ pub struct HidappChannel {
     product_id: u16,
     // `HidDevice` is `Send` but not `Sync`; writes are short, so a plain mutex
     // is enough to share the write handles with the async trait methods.
-    short: Option<Mutex<HidDevice>>,
-    long: Option<Mutex<HidDevice>>,
+    short: Option<Arc<Mutex<HidDevice>>>,
+    long: Option<Arc<Mutex<HidDevice>>>,
     incoming: async_channel::Receiver<Vec<u8>>,
     stop: Arc<AtomicBool>,
     readers: Vec<JoinHandle<()>>,
@@ -50,8 +51,19 @@ impl HidappChannel {
         short_path: Option<&std::ffi::CStr>,
         long_path: Option<&std::ffi::CStr>,
     ) -> Result<Self, hidapi::HidError> {
-        let short = short_path.map(|p| api.open_path(p).map(Mutex::new)).transpose()?;
-        let long = long_path.map(|p| api.open_path(p).map(Mutex::new)).transpose()?;
+        let short = short_path
+            .map(|p| api.open_path(p).map(|dev| Arc::new(Mutex::new(dev))))
+            .transpose()?;
+        // A path that carries both collections is opened once: every handle
+        // receives every input report, so a second one would duplicate them.
+        let same_path = short_path.is_some() && short_path == long_path;
+        let long = if same_path {
+            short.clone()
+        } else {
+            long_path
+                .map(|p| api.open_path(p).map(|dev| Arc::new(Mutex::new(dev))))
+                .transpose()?
+        };
 
         let (tx, rx) = async_channel::unbounded::<Vec<u8>>();
         let stop = Arc::new(AtomicBool::new(false));
@@ -60,13 +72,11 @@ impl HidappChannel {
         // Readers need their own handles; hidapi handles can't be shared across
         // threads, so re-open the path for reading and keep the first handle for
         // writing.
-        for (path, max_len) in [
-            (short_path, LONG_REPORT_LENGTH),
-            (long_path, LONG_REPORT_LENGTH),
-        ] {
+        let long_path = if same_path { None } else { long_path };
+        for path in [short_path, long_path] {
             let Some(path) = path else { continue };
             let dev = api.open_path(path)?;
-            readers.push(spawn_reader(dev, max_len, tx.clone(), Arc::clone(&stop)));
+            readers.push(spawn_reader(dev, LONG_REPORT_LENGTH, tx.clone(), Arc::clone(&stop)));
         }
 
         Ok(Self {

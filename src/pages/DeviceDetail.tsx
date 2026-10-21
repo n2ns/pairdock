@@ -5,6 +5,7 @@ import {
   actionFor,
   api,
   type ButtonAction,
+  isMac,
   type Config,
   type Control,
   type DeviceDetails,
@@ -129,7 +130,7 @@ export function DeviceDetail({ receiverId, device, onBack }: Props) {
         <div className="buttons-layout">
           <section className="card buttons-stage">
             <MouseArt
-              size={210}
+              size={150}
               sideLabels={{ back: t.sideBack, forward: t.sideForward }}
               selectable={selectable}
               selected={selectedPart}
@@ -140,7 +141,7 @@ export function DeviceDetail({ receiverId, device, onBack }: Props) {
             {(partToCid.has("back") || partToCid.has("forward")) && (
               <div className="side-view">
                 <MouseSideArt
-                  size={320}
+                  size={220}
                   labels={{
                     back: t.sideBack,
                     forward: t.sideForward,
@@ -221,6 +222,34 @@ export function DeviceDetail({ receiverId, device, onBack }: Props) {
   );
 }
 
+/** Shown while macOS does not let PairDock send shortcuts. Checks again every
+ * few seconds, so it goes away once the user turns the permission on. */
+function SendKeysNotice() {
+  const t = useStrings();
+  const [allowed, setAllowed] = useState(true);
+
+  useEffect(() => {
+    if (!isMac) return;
+    const check = () => api.canSendKeys().then(setAllowed).catch(() => {});
+    check();
+    const timer = window.setInterval(check, 2000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  if (allowed) return null;
+  return (
+    <div className="card notice-card">
+      <div>
+        <p>{t.sendKeysTitle}</p>
+        <p className="muted small">{t.sendKeysHint}</p>
+      </div>
+      <button className="btn notice-action" onClick={() => api.requestSendKeys()}>
+        {t.sendKeysAllow}
+      </button>
+    </div>
+  );
+}
+
 /** Scrolls the nearest scrolling ancestor so `el` sits near its top, with an
  * eased animation that does not depend on native smooth scrolling. */
 function scrollToElement(el: HTMLElement, offset = 16, duration = 380) {
@@ -276,14 +305,27 @@ function ActionSummary({
 }
 
 const PRESETS: { label: keyof Strings; keys: string }[] = [
-  { label: "presetCopy", keys: "Ctrl+C" },
-  { label: "presetPaste", keys: "Ctrl+V" },
-  { label: "presetUndo", keys: "Ctrl+Z" },
-  { label: "presetBrowserBack", keys: "Alt+Left" },
-  { label: "presetBrowserForward", keys: "Alt+Right" },
-  { label: "presetDesktop", keys: "Win+D" },
-  { label: "presetTaskView", keys: "Win+Tab" },
-  { label: "presetScreenshot", keys: "Win+Shift+S" },
+  ...(isMac
+    ? [
+        { label: "presetCopy", keys: "Cmd+C" },
+        { label: "presetPaste", keys: "Cmd+V" },
+        { label: "presetUndo", keys: "Cmd+Z" },
+        { label: "presetBrowserBack", keys: "Cmd+[" },
+        { label: "presetBrowserForward", keys: "Cmd+]" },
+        { label: "presetDesktop", keys: "F11" },
+        { label: "presetTaskView", keys: "Ctrl+Up" },
+        { label: "presetScreenshot", keys: "Cmd+Shift+4" },
+      ] satisfies { label: keyof Strings; keys: string }[]
+    : [
+        { label: "presetCopy", keys: "Ctrl+C" },
+        { label: "presetPaste", keys: "Ctrl+V" },
+        { label: "presetUndo", keys: "Ctrl+Z" },
+        { label: "presetBrowserBack", keys: "Alt+Left" },
+        { label: "presetBrowserForward", keys: "Alt+Right" },
+        { label: "presetDesktop", keys: "Win+D" },
+        { label: "presetTaskView", keys: "Win+Tab" },
+        { label: "presetScreenshot", keys: "Win+Shift+S" },
+      ] satisfies { label: keyof Strings; keys: string }[]),
   { label: "presetVolumeUp", keys: "VolumeUp" },
   { label: "presetVolumeDown", keys: "VolumeDown" },
   { label: "presetMute", keys: "Mute" },
@@ -365,6 +407,7 @@ function ActionEditor({
 
       {mode === "shortcut" && (
         <>
+          <SendKeysNotice />
           <ShortcutRecorder
             value={action.type === "shortcut" ? action.keys : null}
             onChange={(keys) => onApply({ type: "shortcut", keys })}

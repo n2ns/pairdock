@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="112 112 800 800">
+  <!-- macOS menu bar icon: a template image (black and clear) that the system
+       tints for light and dark menu bars. Same mouse and orbit as pairdock.svg,
+       without the tile and with strokes heavy enough for 18 pt. -->
+  <defs>
+    <mask id="cut">
+      <rect x="0" y="0" width="1024" height="1024" fill="#fff"/>
+      <!-- Wheel slot -->
+      <rect x="482" y="290" width="60" height="116" rx="30" fill="#000"/>
+      <!-- Gap where the front half of the orbit passes over the mouse -->
+      <g transform="rotate(-24 512 540)">
+        <path d="M172 540 A340 112 0 0 0 852 540" fill="none" stroke="#000" stroke-width="120"/>
+      </g>
+    </mask>
+  </defs>
+
+  <g mask="url(#cut)">
+    <!-- Orbit ring, back half -->
+    <g transform="rotate(-24 512 540)">
+      <path d="M172 540 A340 112 0 0 1 852 540" fill="none" stroke="#000" stroke-opacity="0.5"
+            stroke-width="52" stroke-linecap="round"/>
+    </g>
+    <!-- Mouse body with the highlighted left button -->
+    <rect x="356" y="222" width="312" height="510" rx="156" fill="none" stroke="#000" stroke-width="56"/>
+    <path d="M512 222 L512 424 L356 424 L356 378 A156 156 0 0 1 512 222 Z" fill="#000"/>
+    <line x1="356" y1="424" x2="668" y2="424" stroke="#000" stroke-width="36"/>
+  </g>
+
+  <!-- Orbit ring, front half -->
+  <g transform="rotate(-24 512 540)">
+    <path d="M172 540 A340 112 0 0 0 852 540" fill="none" stroke="#000" stroke-width="52"
+          stroke-linecap="round"/>
+    <circle cx="852" cy="540" r="46" fill="#000"/>
+  </g>
+</svg>

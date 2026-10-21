@@ -1,14 +1,15 @@
 # Contributing to PairDock
 
 Thanks for helping! The most useful contributions right now are reports from devices we have not
-tested, protocol traces, Unifying receiver support and macOS/Linux ports.
+tested, protocol traces, Unifying receiver support, testing on Apple silicon Macs and a Linux
+port.
 
 ## Reporting a problem
 
 Please [open an issue](https://github.com/n2ns/pairdock/issues/new/choose) with:
 
 - the receiver (Logi Bolt or Unifying) and the device model, e.g. *Logi M650*;
-- your Windows version and the PairDock version (Settings, bottom of the page);
+- your Windows or macOS version and the PairDock version (Settings, bottom of the page);
 - what you did, what you expected and what happened;
 - for pairing or button problems, a protocol trace (below).
 
@@ -45,7 +46,8 @@ Requirements:
 - Rust (stable, edition 2024)
 - Node.js 20.19 or newer (or 22.12 or newer)
 - The [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your platform (on
-  Windows: the Microsoft C++ Build Tools and WebView2)
+  Windows: the Microsoft C++ Build Tools and WebView2; on macOS: Xcode or its Command Line
+  Tools)
 
 ```bash
 git clone git@github.com:n2ns/pairdock.git
@@ -82,7 +84,9 @@ docs                   user guide and screenshots
 
 - Logitech receivers expose HID++ through vendor-defined HID collections (usage page `0xFF00`,
   usage `0x0001` for short and `0x0002` for long reports). On Windows these are two separate
-  HID handles; `pairdock-core::transport` pairs them into one channel.
+  HID handles; `pairdock-core::transport` pairs them into one channel. On macOS both share one
+  device path, which is opened once, and without seizing the device (hidapi's
+  `macos-shared-device`), so that the engine and the UI can use the receiver at the same time.
 - **Bolt pairing** follows Solaar: start discovery (register `0xC0`), pair a discovered device by
   its address (register `0xC1`), show the passkey from notification `0x4D`, count presses from
   `0x4E`, and treat only a `0x54` status with state `0x02`, no error and a slot as success. Mouse
@@ -90,9 +94,11 @@ docs                   user guide and screenshots
 - **Button customization** uses the `0x1B04` *ReprogControlsV4* feature: `setCidReporting`
   either remaps a control on the device or diverts it, after which the device reports presses as
   HID++ events that the engine turns into key presses (`enigo`). Diversion is not persistent, so
-  the engine re-applies the configuration whenever a device reconnects.
-- Windows hands every input report to every open handle. The engine therefore uses its own
-  HID++ software ID, so it never takes responses meant for the UI.
+  the engine re-applies the configuration whenever a device reconnects. On macOS letters and
+  digits are sent as fixed US key codes (`kVK_ANSI_*`): looking them up in the keyboard layout
+  uses the Text Input Sources API, which may only be called on the main thread.
+- Windows and macOS hand every input report to every open handle. The engine therefore uses its
+  own HID++ software ID, so it never takes responses meant for the UI.
 
 [Solaar](https://github.com/pwr-Solaar/Solaar) is the best reference for receiver registers and
 device features.

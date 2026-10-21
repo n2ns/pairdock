@@ -29,8 +29,9 @@ GitHub's handling of these requests is covered by the
 With update checks at startup turned off, PairDock makes no network requests unless you click
 *Check for updates*.
 
-Its interface is bundled with the program and runs in Microsoft Edge WebView2, which PairDock
-does not ask to load anything from the internet.
+Its interface is bundled with the program and runs in Microsoft Edge WebView2 on Windows and in
+the system's WebKit on macOS, neither of which PairDock asks to load anything from the
+internet.
 
 Two parts of Windows that PairDock relies on are maintained by Microsoft under Microsoft's own
 terms:
@@ -42,7 +43,7 @@ terms:
 
 ## What PairDock accesses
 
-- **Logitech receivers**, through the HID driver built into Windows. PairDock reads the names,
+- **Logitech receivers**, through the HID driver built into Windows or macOS. PairDock reads the names,
   model IDs, serial numbers, battery levels and button capabilities of the devices paired to
   them, and sends the commands to pair, unpair and configure them.
 - **Your mouse buttons**, only those you set to *Shortcut* or *Disabled*. The mouse then reports
@@ -50,7 +51,9 @@ terms:
   movement or any other button.
 - **Your keyboard**, not at all for reading: PairDock never reads what you type. It sees key
   presses only inside its own window while you record a shortcut. It sends key presses to
-  Windows only for the shortcuts you set up, while the mapped button is held.
+  the system only for the shortcuts you set up, while the mapped button is held. On macOS this
+  needs the Accessibility permission, which you grant in System Settings; PairDock uses it for
+  nothing else.
 
 ## What PairDock stores
 
@@ -61,6 +64,15 @@ Everything stays on your computer:
 | Button settings: device model IDs and the action of each button | `%APPDATA%\dev.pairdock.desktop\config.json` |
 | Language, appearance and the update check setting | `%LOCALAPPDATA%\dev.pairdock.desktop` (WebView2 data) |
 | The startup entry, if *Launch at startup* is on | `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`, value `PairDock` |
+
+On macOS:
+
+| What | Where |
+|---|---|
+| Button settings | `~/Library/Application Support/dev.pairdock.desktop/config.json` |
+| Language, appearance and the update check setting | `~/Library/WebKit/dev.pairdock.desktop` and `~/Library/Caches/dev.pairdock.desktop` (WebKit data) |
+| The startup entry, if *Launch at startup* is on | `~/Library/LaunchAgents/PairDock.plist` |
+| The Accessibility permission, once you grant it | macOS's own privacy settings (System Settings → Privacy & Security → Accessibility) |
 
 PairDock writes no log files. Device serial numbers are shown, not stored.
 
@@ -74,7 +86,8 @@ code, so review it before attaching it to a bug report.
 ## Removing your data
 
 Uninstall PairDock and delete the two folders listed above. Turning off *Launch at startup*
-before uninstalling removes the startup entry.
+before uninstalling removes the startup entry. On macOS, delete the folders listed for macOS and
+remove PairDock from **System Settings → Privacy & Security → Accessibility**.
 
 ## Changes
 

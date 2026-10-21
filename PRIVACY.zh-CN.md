@@ -16,7 +16,7 @@ PairDock 联网只有一个用途：到 GitHub 检查是否有新版本。
 
 GitHub 如何处理这些请求，适用 [GitHub 隐私声明](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement)。关闭"启动时检查更新"后，除非你手动点击"检查更新"，PairDock 不会发起任何网络请求。
 
-它的界面随程序一起打包，运行在 Microsoft Edge WebView2 中，PairDock 不会让 WebView2 从互联网加载任何内容。
+它的界面随程序一起打包，在 Windows 上运行在 Microsoft Edge WebView2 中，在 macOS 上运行在系统自带的 WebKit 中，PairDock 不会让它们从互联网加载任何内容。
 
 PairDock 依赖的两个 Windows 组件由微软维护，适用微软自己的条款：
 
@@ -25,9 +25,9 @@ PairDock 依赖的两个 Windows 组件由微软维护，适用微软自己的�
 
 ## PairDock 会访问什么
 
-- **罗技接收器**：通过 Windows 自带的 HID 驱动访问。PairDock 会读取配对在接收器上的设备的名称、型号、序列号、电量和按键能力，并发送配对、解除配对和设置按键的命令。
+- **罗技接收器**：通过 Windows 或 macOS 自带的 HID 驱动访问。PairDock 会读取配对在接收器上的设备的名称、型号、序列号、电量和按键能力，并发送配对、解除配对和设置按键的命令。
 - **鼠标按键**：只限于你设置为"快捷键"或"禁用"的那几个键。这些键被按下时，鼠标会把按键事件交给 PairDock，而不是交给 Windows。PairDock 看不到鼠标移动，也看不到其他按键。
-- **键盘**：PairDock 从不读取你输入的内容。只有在它自己的窗口里录制快捷键时，它才能看到你按下的键。它只会为你设置的快捷键、在对应的鼠标按键被按住时，向 Windows 发送按键。
+- **键盘**：PairDock 从不读取你输入的内容。只有在它自己的窗口里录制快捷键时，它才能看到你按下的键。它只会为你设置的快捷键、在对应的鼠标按键被按住时，向系统发送按键。在 macOS 上这需要你在系统设置中授予"辅助功能"权限，PairDock 不会把这个权限用于其他任何事情。
 
 ## PairDock 会保存什么
 
@@ -39,6 +39,15 @@ PairDock 依赖的两个 Windows 组件由微软维护，适用微软自己的�
 | 语言、外观和检查更新设置 | `%LOCALAPPDATA%\dev.pairdock.desktop`（WebView2 数据） |
 | 开机启动项（仅在开启"开机自动启动"时） | `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run` 下的 `PairDock` 值 |
 
+在 macOS 上：
+
+| 内容 | 位置 |
+|---|---|
+| 按键设置 | `~/Library/Application Support/dev.pairdock.desktop/config.json` |
+| 语言、外观和检查更新设置 | `~/Library/WebKit/dev.pairdock.desktop` 和 `~/Library/Caches/dev.pairdock.desktop`（WebKit 数据） |
+| 开机启动项（仅在开启"开机自动启动"时） | `~/Library/LaunchAgents/PairDock.plist` |
+| "辅助功能"权限（在你授予之后） | 由 macOS 自己的隐私设置保存（系统设置 → 隐私与安全性 → 辅助功能） |
+
 PairDock 不写日志文件。设备序列号只用于显示，不会保存。
 
 ## 协议日志
@@ -47,7 +56,7 @@ PairDock 不写日志文件。设备序列号只用于显示，不会保存。
 
 ## 删除你的数据
 
-卸载 PairDock，然后删除上面列出的两个文件夹。卸载前先关闭"开机自动启动"，即可删除开机启动项。
+卸载 PairDock，然后删除上面列出的两个文件夹。卸载前先关闭"开机自动启动"，即可删除开机启动项。在 macOS 上，请删除上面为 macOS 列出的文件夹，并在**系统设置 → 隐私与安全性 → 辅助功能**里移除 PairDock。
 
 ## 变更
 

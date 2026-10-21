@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 
+import { isMac } from "../api";
 import { useStrings } from "../i18n";
 
 const NAMED: Record<string, string> = {
@@ -40,9 +41,9 @@ export function shortcutFromEvent(e: KeyboardEvent | React.KeyboardEvent): strin
 
   const parts = [];
   if (e.ctrlKey) parts.push("Ctrl");
-  if (e.altKey) parts.push("Alt");
+  if (e.altKey) parts.push(isMac ? "Option" : "Alt");
   if (e.shiftKey) parts.push("Shift");
-  if (e.metaKey) parts.push("Win");
+  if (e.metaKey) parts.push(isMac ? "Cmd" : "Win");
   parts.push(key);
   return parts.join("+");
 }

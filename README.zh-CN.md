@@ -26,7 +26,7 @@
 Logi Options+ 是一个庞大的套件，带着后台服务、自动更新、账号、云端功能和使用数据统计。如果你只是想把鼠标或键盘配对到接收器、改几个按键，PairDock 只做这些事：
 
 - **小巧**：安装包约 3 MB，运行时只有一个托盘程序。
-- **不需要罗技软件和驱动**：直接通过 Windows 自带的 HID 驱动和接收器通信。
+- **不需要罗技软件和驱动**：直接通过 Windows 或 macOS 自带的 HID 驱动和接收器通信。
 - **注重隐私**：不需要账号，不收集任何数据；唯一的联网是到 GitHub 检查更新，可以关闭。详见[隐私说明](PRIVACY.zh-CN.md)。
 - **不会阻止关机**：Windows 关机时立即响应，不会出现"某程序阻止关机"。
 
@@ -55,7 +55,7 @@ Logi Options+ 是一个庞大的套件，带着后台服务、自动更新、账
 
 ## 系统要求
 
-- Windows 10 或 11（64 位），需要 Microsoft Edge WebView2 运行时（Windows 11 已自带）。
+- Windows 10 或 11（64 位），需要 Microsoft Edge WebView2 运行时（Windows 11 已自带）；或者 macOS（已在 Intel Mac 的 macOS 15 Sequoia 上测试）。
 - **Logi Bolt** USB 接收器，以及带 Bolt 标志的设备。
 
 | | 状态 |
@@ -64,13 +64,16 @@ Logi Options+ 是一个庞大的套件，带着后台服务、自动更新、账
 | 罗技 Unifying 接收器 | 能识别，暂不支持（已列入计划） |
 | 鼠标配对与按键设置 | 已用 Logi M650 实测 |
 | 键盘配对 | 已实现，尚未在实物上测试 |
-| macOS、Linux | 暂不支持，代码结构已为它们预留 |
+| macOS | 配对、解除配对和按键设置已在 Intel Mac（macOS 15）上实测；尚未测试的部分见[操作手册的 macOS 一节](docs/user-guide.zh-CN.md#macos) |
+| Linux | 暂不支持，代码结构已为它预留 |
 
 ## 安装
 
 1. 从[最新发布](https://github.com/n2ns/pairdock/releases/latest)下载 `PairDock_x.y.z_x64-setup.exe`。
 2. 运行安装程序。安装包暂时还没有代码签名，Windows SmartScreen 可能会提示"Windows 已保护你的电脑"，点击**更多信息 → 仍要运行**即可。
 3. 如果装了 Logi Options+，请先退出或卸载它，否则两个程序会争抢同一组按键。
+
+macOS 用户请下载 `PairDock_x.y.z_aarch64.dmg`（Apple 芯片）或 `PairDock_x.y.z_x64.dmg`（Intel），打开后把 PairDock 拖进"应用程序"。应用暂时没有 Apple Developer ID 签名，首次打开需要点"仍要打开"，发送快捷键还需要"辅助功能"权限，步骤见[操作手册](docs/user-guide.zh-CN.md#macos)。
 
 接下来请看[操作手册](docs/user-guide.zh-CN.md)。
 
@@ -80,7 +83,7 @@ Logi Options+ 是一个庞大的套件，带着后台服务、自动更新、账
 
 **卸载 PairDock 后，设备还会保持配对吗？** 会。配对信息保存在接收器里，不在电脑上。
 
-**关闭 PairDock 后快捷键还有效吗？** "快捷键"和"禁用"需要 PairDock 在托盘中运行。"改成其他按键"虽然保存在鼠标上，但鼠标重新连接后会丢失，要靠 PairDock 重新设置。关闭窗口时 PairDock 会留在托盘中；要彻底退出，请用托盘菜单里的 **Quit**，退出前会先把按键还原。
+**关闭 PairDock 后快捷键还有效吗？** "快捷键"和"禁用"需要 PairDock 在托盘（macOS 上是菜单栏）中运行。"改成其他按键"虽然保存在鼠标上，但鼠标重新连接后会丢失，要靠 PairDock 重新设置。关闭窗口时 PairDock 会留在托盘中；要彻底退出，请用托盘菜单里的 **Quit**，退出前会先把按键还原。
 
 ## 参与贡献
 

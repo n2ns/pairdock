@@ -29,7 +29,7 @@ remap a couple of buttons, PairDock does that and nothing else:
 
 - **Small** — one ~3 MB installer, one tray app.
 - **No Logitech software or driver** — it talks to the receiver through the HID driver that
-  comes with Windows.
+  comes with Windows or macOS.
 - **Private** — no account, no telemetry; the only connection is an update check on GitHub,
   which you can turn off. See [PRIVACY.md](PRIVACY.md).
 - **Never holds up shutdown** — it answers Windows' shutdown request immediately.
@@ -63,7 +63,8 @@ leaves behind when it is paired again, light and dark themes, English and Chines
 
 ## Requirements
 
-- Windows 10 or 11 (64-bit) with the Microsoft Edge WebView2 runtime (included in Windows 11).
+- Windows 10 or 11 (64-bit) with the Microsoft Edge WebView2 runtime (included in Windows 11),
+  or macOS (tested on macOS 15 Sequoia on an Intel Mac).
 - A **Logi Bolt** USB receiver and devices with the Bolt logo.
 
 | | Status |
@@ -72,7 +73,8 @@ leaves behind when it is paired again, light and dark themes, English and Chines
 | Logitech Unifying receiver | Detected, not supported yet (planned) |
 | Mouse pairing and button settings | Tested with a Logi M650 |
 | Keyboard pairing | Implemented, not yet tested on hardware |
-| macOS, Linux | Not yet; the code is structured for them |
+| macOS | Pairing, unpairing and button settings tested on an Intel Mac with macOS 15; see [macOS](docs/user-guide.md#macos) for what is not tested yet |
+| Linux | Not yet; the code is structured for it |
 
 ## Install
 
@@ -82,6 +84,11 @@ leaves behind when it is paired again, light and dark themes, English and Chines
    *"Windows protected your PC"*. Click **More info → Run anyway**.
 3. If Logi Options+ is installed, quit it or uninstall it first. Both programs would try to
    handle the same buttons.
+
+On macOS, download `PairDock_x.y.z_aarch64.dmg` (Apple silicon) or `PairDock_x.y.z_x64.dmg`
+(Intel), open it and drag PairDock into Applications. The app is not signed with an Apple
+Developer ID yet, so the first start needs **Open Anyway**, and sending shortcuts needs the
+Accessibility permission; the [user guide](docs/user-guide.md#macos) walks through both.
 
 Then follow the [user guide](docs/user-guide.md).
 
@@ -95,7 +102,7 @@ are paired in the Windows Bluetooth settings.
 receiver, not on the computer.
 
 **Do shortcuts work when PairDock is closed?** Shortcuts and disabled buttons need PairDock
-running in the tray. Buttons mapped to another button are stored on the mouse, but the
+running in the tray (the menu bar on macOS). Buttons mapped to another button are stored on the mouse, but the
 mouse forgets them when it reconnects and PairDock sets them again. Closing the window keeps PairDock in the tray; use **Quit** in the tray menu to
 exit, which restores the buttons first.
 

@@ -16,7 +16,7 @@ use tauri::{
     webview::PageLoadEvent,
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
-use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
+use tauri_plugin_autostart::MacosLauncher;
 
 use crate::state::AppState;
 
@@ -35,6 +35,10 @@ pub(crate) fn update_marker(app: &AppHandle) -> Option<PathBuf> {
         .ok()
         .map(|dir| dir.join("updated"))
 }
+
+/// The page is shown at this zoom so that it fits laptop screens; the window
+/// sizes in tauri.conf.json match it.
+const UI_ZOOM: f64 = 0.85;
 
 /// How long quitting may take to restore diverted buttons.
 pub(crate) const RESTORE_LIMIT: Duration = Duration::from_secs(3);
@@ -56,6 +60,14 @@ pub fn run() {
         .setup(|app| {
             #[cfg(windows)]
             migrate_legacy_autostart(app.handle());
+            // PairDock lives in the menu bar, without a Dock icon or app menu.
+            // Info.plist says so too, but tao applies its own default policy
+            // once launched.
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_zoom(UI_ZOOM);
+            }
             if let Some(marker) = update_marker(app.handle()) {
                 UPDATED.store(std::fs::remove_file(marker).is_ok(), Ordering::SeqCst);
             }
@@ -74,6 +86,10 @@ pub fn run() {
                     || UPDATED.load(Ordering::SeqCst))
             {
                 let _ = webview.window().show();
+                // A menu bar app (LSUIElement in Info.plist) is not brought to
+                // the front when it starts.
+                #[cfg(target_os = "macos")]
+                let _ = webview.window().set_focus();
             }
         })
         .on_window_event(|window, event| {
@@ -95,6 +111,8 @@ pub fn run() {
             commands::rediscover,
             commands::get_config,
             commands::set_button,
+            commands::can_send_keys,
+            commands::request_send_keys,
             commands::check_update,
             commands::install_update,
             commands::open_repository,
@@ -102,14 +120,27 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building the pairdock app");
 
-    app.run(|_app, event| {
-        if let RunEvent::ExitRequested { code: None, api, .. } = event {
+    #[cfg_attr(not(target_os = "macos"), allow(unused_variables))]
+    app.run(|app, event| match event {
+        RunEvent::ExitRequested { code: None, api, .. } => {
             // Only the tray's "Quit" ends pairdock (it exits with a code after
             // restoring the buttons). The OS ending the session never gets
             // here: the windows answer WM_QUERYENDSESSION right away and
             // nothing blocks shutting down.
             api.prevent_exit();
-        }
+        },
+        // Opening PairDock again from Finder or Launchpad while it runs.
+        #[cfg(target_os = "macos")]
+        RunEvent::Reopen { .. } => show_main_window(app),
+        // Logging out or shutting down ends the app directly, without asking
+        // first; restore the buttons before the process goes away.
+        #[cfg(target_os = "macos")]
+        RunEvent::Exit => {
+            if let Some(state) = app.try_state::<AppState>() {
+                tauri::async_runtime::block_on(state.shutdown(RESTORE_LIMIT));
+            }
+        },
+        _ => {},
     });
 }
 
@@ -117,6 +148,8 @@ pub fn run() {
 /// which points at an executable that no longer exists, with PairDock's own.
 #[cfg(windows)]
 fn migrate_legacy_autostart(app: &AppHandle) {
+    use tauri_plugin_autostart::ManagerExt;
+
     let Ok(exe) = std::env::current_exe() else { return };
     let Ok(legacy) = auto_launch::AutoLaunchBuilder::new()
         .set_app_name("boltkit")
@@ -190,25 +223,36 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &quit_item])?;
 
+    // A left click opens the window on Windows. On macOS a click on a menu
+    // bar extra shows its menu (Human Interface Guidelines, "The menu bar").
     let mut tray = TrayIconBuilder::with_id("main")
         .tooltip("PairDock")
         .menu(&menu)
-        .show_menu_on_left_click(false)
+        .show_menu_on_left_click(cfg!(target_os = "macos"))
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => show_main_window(app),
             "quit" => quit(app),
             _ => {},
         })
         .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click {
-                button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
-                ..
-            } = event
+            if !cfg!(target_os = "macos")
+                && let TrayIconEvent::Click {
+                    button: MouseButton::Left,
+                    button_state: MouseButtonState::Up,
+                    ..
+                } = event
             {
                 show_main_window(tray.app_handle());
             }
         });
+    // The menu bar takes a template image (black and clear) that macOS tints
+    // for light and dark menu bars; it is drawn from icons/source/tray-template.svg.
+    #[cfg(target_os = "macos")]
+    {
+        let icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-template.png"))?;
+        tray = tray.icon(icon).icon_as_template(true);
+    }
+    #[cfg(not(target_os = "macos"))]
     if let Some(icon) = app.default_window_icon() {
         tray = tray.icon(icon.clone());
     }

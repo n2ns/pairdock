@@ -1,14 +1,28 @@
 name: Release
 
-# Push a tag such as v0.0.1 to build the Windows installers and draft a release.
-# Review the draft on GitHub, then publish it.
+# Push a tag such as v0.0.1 to build the Windows installers and the macOS apps
+# and draft a release. Review the draft on GitHub, then publish it.
 on:
   push:
     tags: ["v*"]
 
 jobs:
-  windows:
-    runs-on: windows-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            args: ""
+          # One build per Mac architecture; each adds its darwin entry to
+          # latest.json.
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            args: --target aarch64-apple-darwin
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            args: --target x86_64-apple-darwin
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: write
     steps:
@@ -20,21 +34,26 @@ jobs:
           cache: npm
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
 
       - name: Install frontend dependencies
         run: npm ci
 
       # The installers are signed for the updater with the key whose public half
       # is in tauri.conf.json; latest.json, which the app checks, lists them.
+      # The macOS apps are only signed ad hoc (see tauri.macos.conf.json).
       - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          args: --config src-tauri/tauri.release.conf.json
+          args: --config src-tauri/tauri.release.conf.json ${{ matrix.args }}
           # Update with the same installer the docs recommend (setup.exe).
           updaterJsonPreferNsis: true
           tagName: ${{ github.ref_name }}

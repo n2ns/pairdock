@@ -5,7 +5,7 @@ use std::sync::Arc;
 use pairdock_core::{
     config::{ButtonAction, Config},
     inventory::{self, Battery, DeviceDetails, ReceiverSummary},
-    keys::parse_shortcut,
+    keys::{self, parse_shortcut},
     pairing::{BoltPairing, PairingEvent},
 };
 use serde::Serialize;
@@ -142,6 +142,19 @@ pub fn set_button(
 
     state.store_config(config.clone())?;
     Ok(config)
+}
+
+/// Whether shortcuts can be sent: on macOS PairDock needs the Accessibility
+/// permission for that.
+#[tauri::command]
+pub fn can_send_keys() -> bool {
+    keys::can_send_keys()
+}
+
+/// Asks the system for the permission to send shortcuts.
+#[tauri::command]
+pub fn request_send_keys() {
+    keys::request_send_keys();
 }
 
 /// A newer release, as shown to the user.

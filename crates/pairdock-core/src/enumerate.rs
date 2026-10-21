@@ -96,8 +96,8 @@ pub async fn open_receiver(
     Ok((chan, receiver))
 }
 
-/// Who uses a channel. Windows hands every input report to every open handle
-/// of a device, so channels opened at the same time must not reuse each
+/// Who uses a channel. Windows and macOS hand every input report to every open
+/// handle of a device, so channels opened at the same time must not reuse each
 /// other's software IDs, or one picks up the other's responses.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum ChannelRole {
@@ -138,8 +138,8 @@ fn is_known_receiver(product_id: u16) -> bool {
 ///
 /// The collection shows up twice: as `&colNN` in the hardware id and as the
 /// last `&NNNN` of the instance id. Dropping both groups the short and long
-/// HID++ collections of one receiver together. On other platforms one path
-/// already covers the whole interface and is used as is.
+/// HID++ collections of one receiver together. On macOS both collections are
+/// listed with the same path (`DevSrvsID:<registry id>`), which is used as is.
 pub fn interface_key(path: &str) -> String {
     let lower = path.to_ascii_lowercase();
     let parts: Vec<&str> = lower.split('#').collect();

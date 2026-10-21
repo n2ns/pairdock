@@ -2,6 +2,8 @@
 
 import { createContext, useContext } from "react";
 
+import { isMac } from "./api";
+
 const en = {
   navDevices: "Devices",
   navPair: "Pair a device",
@@ -49,6 +51,10 @@ const en = {
   presets: "Common",
   saved: "Saved",
   needsTray: "Needs PairDock running",
+  sendKeysTitle: "PairDock needs the Accessibility permission to send shortcuts",
+  sendKeysHint:
+    "Open System Settings → Privacy & Security → Accessibility and turn on PairDock. Shortcuts work as soon as it is on.",
+  sendKeysAllow: "Allow…",
 
   presetCopy: "Copy",
   presetPaste: "Paste",
@@ -200,6 +206,9 @@ const zh: typeof en = {
   presets: "常用",
   saved: "已保存",
   needsTray: "需要后台运行",
+  sendKeysTitle: "PairDock 需要“辅助功能”权限才能发送快捷键",
+  sendKeysHint: "打开“系统设置 → 隐私与安全性 → 辅助功能”，打开 PairDock 的开关。打开后快捷键立即生效。",
+  sendKeysAllow: "授权…",
 
   presetCopy: "复制",
   presetPaste: "粘贴",
@@ -301,12 +310,38 @@ const zh: typeof en = {
   demoMode: "演示模式：当前在浏览器中运行，显示的是模拟设备。",
 };
 
+// macOS has a menu bar instead of a tray and replaces the app on update.
+const enMac: typeof en = {
+  ...en,
+  actionRemapHint:
+    "Stored on the device, which forgets it when it reconnects. Needs PairDock running in the menu bar to set it again.",
+  actionShortcutHint: "Sends a key combination while the button is held. Needs PairDock running in the menu bar.",
+  actionDisabledHint: "The button does nothing. Needs PairDock running in the menu bar.",
+  presetTaskView: "Mission Control",
+  autostartHint: "PairDock starts in the menu bar so your button shortcuts work right away.",
+  updateText: (current: string) =>
+    `You have ${current}. Installing returns the buttons to their defaults, replaces the app and restarts PairDock, which applies your button settings again.`,
+};
+
+const zhMac: typeof en = {
+  ...zh,
+  actionRemapHint: "保存在设备上，但设备重新连接后会丢失。需要 PairDock 在菜单栏中运行，以便重新设置。",
+  actionShortcutHint: "按住按键时发送组合键。需要 PairDock 在菜单栏中运行。",
+  actionDisabledHint: "按键不再有任何作用。需要 PairDock 在菜单栏中运行。",
+  presetTaskView: "调度中心",
+  autostartHint: "开机后 PairDock 在菜单栏中运行，按键快捷键马上可用。",
+  updateText: (current: string) =>
+    `当前版本 ${current}。安装时会先把按键恢复为默认功能，然后替换应用并重新启动 PairDock，重启后按键设置会重新生效。`,
+};
+
 export type Strings = typeof en;
 export type Language = "auto" | "zh" | "en";
 
 export function resolveStrings(language: Language): Strings {
   const lang = language === "auto" ? navigator.language : language;
-  return lang.toLowerCase().startsWith("zh") ? zh : en;
+  const isZh = lang.toLowerCase().startsWith("zh");
+  if (isMac) return isZh ? zhMac : enMac;
+  return isZh ? zh : en;
 }
 
 export const StringsContext = createContext<Strings>(en);

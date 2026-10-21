@@ -99,6 +99,10 @@ interface Backend {
   rediscover(): Promise<void>;
   getConfig(): Promise<Config>;
   setButton(wpid: number, cid: number, action: ButtonAction): Promise<Config>;
+  /** Whether shortcuts can be sent (macOS needs the Accessibility permission). */
+  canSendKeys(): Promise<boolean>;
+  /** Asks the system for the permission to send shortcuts. */
+  requestSendKeys(): Promise<void>;
   onPairing(handler: (event: PairingEvent) => void): Promise<() => void>;
   checkUpdate(): Promise<UpdateInfo | null>;
   /** Restores the buttons, runs the installer and restarts PairDock. */
@@ -108,6 +112,9 @@ interface Backend {
 }
 
 export const isTauri = "__TAURI_INTERNALS__" in window;
+
+/** Shortcuts use Cmd and Option there, and sending them needs a permission. */
+export const isMac = navigator.userAgent.includes("Mac");
 
 export const REPOSITORY_URL = "https://github.com/n2ns/pairdock";
 
@@ -122,6 +129,8 @@ const tauriBackend: Backend = {
   rediscover: () => invoke("rediscover"),
   getConfig: () => invoke("get_config"),
   setButton: (wpid, cid, action) => invoke("set_button", { wpid, cid, action }),
+  canSendKeys: () => invoke("can_send_keys"),
+  requestSendKeys: () => invoke("request_send_keys"),
   onPairing: (handler) => listen<PairingEvent>("pairing", (e) => handler(e.payload)),
   checkUpdate: () => invoke("check_update"),
   installUpdate: () => invoke("install_update"),
@@ -229,6 +238,10 @@ const demoBackend: Backend = {
     if (Object.keys(device.buttons).length === 0) delete demoConfig.devices[wpid];
     return structuredClone(demoConfig);
   },
+  async canSendKeys() {
+    return true;
+  },
+  async requestSendKeys() {},
   async onPairing(handler) {
     demoListeners.add(handler);
     return () => demoListeners.delete(handler);

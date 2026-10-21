@@ -41,8 +41,8 @@
   --radius: 8px;
   --radius-sm: 6px;
   --radius-control: 4px;
-  font-family: "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Microsoft YaHei UI",
-    system-ui, sans-serif;
+  font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, "PingFang SC",
+    "Microsoft YaHei UI", system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   color: var(--text);
@@ -141,7 +141,7 @@ button {
 }
 
 .mono {
-  font-family: "Cascadia Mono", Consolas, monospace;
+  font-family: "Cascadia Mono", Consolas, Menlo, monospace;
   font-size: 12px;
 }
 
@@ -157,7 +157,7 @@ button {
 
 .shell {
   display: grid;
-  grid-template-columns: 232px 1fr;
+  grid-template-columns: 196px 1fr;
   height: 100%;
 }
 
@@ -305,6 +305,12 @@ nav {
   gap: 16px;
   padding: 16px 20px;
   border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+}
+
+/* Keeps the action button on one line next to a long explanation. */
+.notice-action {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .notice {
@@ -776,7 +782,7 @@ nav {
 
 .buttons-layout {
   display: grid;
-  grid-template-columns: minmax(300px, 1fr) minmax(340px, 1.15fr);
+  grid-template-columns: minmax(200px, 0.55fr) minmax(340px, 1.45fr);
   gap: 18px;
   align-items: start;
 }
@@ -786,7 +792,7 @@ nav {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 28px 20px 20px;
+  padding: 24px 14px 18px;
   background: var(--surface);
 }
 
@@ -864,7 +870,7 @@ nav {
 
 .choice-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
   gap: 8px;
 }
 

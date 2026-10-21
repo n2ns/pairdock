@@ -444,14 +444,28 @@ impl Injector {
     fn spawn() -> Self {
         let (tx, rx) = std::sync::mpsc::channel::<(Shortcut, Direction)>();
         std::thread::spawn(move || {
-            let mut enigo = match Enigo::new(&Settings::default()) {
-                Ok(enigo) => enigo,
-                Err(err) => {
-                    tracing::error!("cannot synthesize input: {err}");
-                    return;
-                },
+            // Without the permission to send keys (Accessibility on macOS),
+            // creating `Enigo` fails; it is tried again with every press, so
+            // shortcuts start working as soon as the user grants it. Asking
+            // for the permission is left to the UI.
+            let settings = Settings {
+                open_prompt_to_get_permissions: false,
+                ..Settings::default()
             };
+            let mut enigo = None;
+            let mut warned = false;
             while let Ok((Shortcut(keys), direction)) = rx.recv() {
+                if enigo.is_none() {
+                    match Enigo::new(&settings) {
+                        Ok(created) => enigo = Some(created),
+                        Err(err) if !warned => {
+                            tracing::error!("cannot synthesize input: {err}");
+                            warned = true;
+                        },
+                        Err(_) => {},
+                    }
+                }
+                let Some(enigo) = enigo.as_mut() else { continue };
                 let ordered: Box<dyn Iterator<Item = _>> = match direction {
                     Direction::Release => Box::new(keys.into_iter().rev()),
                     _ => Box::new(keys.into_iter()),

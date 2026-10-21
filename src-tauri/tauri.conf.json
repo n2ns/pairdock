@@ -14,10 +14,10 @@
       {
         "label": "main",
         "title": "PairDock",
-        "width": 1080,
-        "height": 720,
-        "minWidth": 880,
-        "minHeight": 600,
+        "width": 920,
+        "height": 612,
+        "minWidth": 750,
+        "minHeight": 510,
         "center": true,
         "visible": false
       }

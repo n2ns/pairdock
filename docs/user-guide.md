@@ -9,6 +9,7 @@
 - [Customizing buttons](#customizing-buttons)
 - [Settings](#settings)
 - [The tray and quitting](#the-tray-and-quitting)
+- [macOS](#macos)
 - [Troubleshooting](#troubleshooting)
 - [Uninstalling](#uninstalling)
 
@@ -145,6 +146,78 @@ changed.
 
 The tray menu is in English only for now: **Open PairDock** (opens the window) and **Quit**.
 
+## macOS
+
+PairDock works the same way on a Mac, with these differences. It was tested on macOS 15
+Sequoia on an Intel Mac; see [Not tested yet](#not-tested-yet-on-macos).
+
+### Installing and the first start
+
+1. Download `PairDock_x.y.z_aarch64.dmg` for a Mac with Apple silicon or
+   `PairDock_x.y.z_x64.dmg` for an Intel Mac, open it and drag **PairDock** into
+   **Applications**.
+2. Open PairDock. It is not signed with an Apple Developer ID or notarized yet, so macOS blocks
+   the first start. Open **System Settings → Privacy & Security**, scroll down, click
+   **Open Anyway** and confirm with **Open**
+   ([Apple's instructions](https://support.apple.com/102445)). Later starts work normally.
+
+### The menu bar
+
+PairDock lives in the menu bar, not in the Dock. Click its icon (a mouse with an orbit) for the
+menu: **Open PairDock** and **Quit**. Closing the window keeps PairDock running; opening
+PairDock again from Applications shows the window.
+
+### Allowing shortcuts
+
+macOS lets an app send key presses only with the **Accessibility** permission. Pairing,
+**Another button** and **Disabled** work without it.
+
+1. Choose **Shortcut** for a button. PairDock shows a notice when the permission is missing.
+2. Click **Allow…**, then **Open System Settings** in the dialog that appears.
+3. Under **Privacy & Security → Accessibility**, turn on **PairDock**.
+
+The notice disappears within two seconds and shortcuts work right away, without restarting
+PairDock.
+
+**After every update you have to allow it again.** Without a Developer ID signature, macOS
+treats each new version as a different app, and the old switch no longer applies even though
+it may still show as on. Remove PairDock from the list with the **−** button (or run
+`tccutil reset Accessibility dev.pairdock.desktop` in Terminal), then follow the steps above.
+
+### Shortcuts
+
+The common shortcuts use the Mac keys: **Copy** `Cmd+C`, **Paste** `Cmd+V`, **Undo** `Cmd+Z`,
+**Browser back / forward** `Cmd+[` / `Cmd+]`, **Show desktop** `F11`,
+**Mission Control** `Ctrl+Up` and **Screenshot** `Cmd+Shift+4`. Recorded shortcuts are shown
+with **Cmd** and **Option**.
+
+Letters and digits are sent as the keys in those positions on a US keyboard, the way macOS
+numbers its keys. With a layout that moves letters, such as AZERTY or Dvorak, a common shortcut
+like `Cmd+Z` presses the key where Z is on a US keyboard.
+
+### Quitting
+
+**Quit** in the menu returns every button to its default before PairDock exits, as on Windows.
+
+### Uninstalling
+
+Turn off **Launch at startup** in Settings, quit PairDock and drag it from Applications to the
+Trash. To remove every trace, also delete:
+
+- `~/Library/Application Support/dev.pairdock.desktop` — button settings (`config.json`)
+- `~/Library/WebKit/dev.pairdock.desktop` and `~/Library/Caches/dev.pairdock.desktop` — window
+  data (language and appearance)
+- `~/Library/LaunchAgents/PairDock.plist` — the startup entry, if it is still there
+
+and remove PairDock from **System Settings → Privacy & Security → Accessibility**.
+
+### Not tested yet on macOS
+
+- Macs with Apple silicon.
+- **Launch at startup**.
+- Installing an update from the window.
+- Pairing a keyboard (not tested on Windows either).
+
 ## Troubleshooting
 
 **"No Logitech receiver found"** — Plug the receiver into a USB port on the computer and
@@ -161,6 +234,11 @@ one is pressed slightly earlier, it counts as an extra click.
 
 **Shortcuts stopped working** — PairDock must be running: look for its tray icon, or start it
 again. If Logi Options+ is running too, quit it.
+
+**Shortcuts do nothing in one particular window** — Windows does not let programs send key
+presses to windows that run as administrator, such as Task Manager
+([SendInput](https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-sendinput)).
+PairDock's shortcuts work again as soon as another window is active.
 
 **A button does nothing after PairDock crashed** — PairDock could not return the button to its
 default. Start PairDock and quit it from the tray, or switch the mouse off and on.
