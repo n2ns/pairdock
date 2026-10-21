@@ -3,13 +3,18 @@ import { useEffect, useState } from "react";
 
 import { isTauri } from "../api";
 import { type Language, useStrings } from "../i18n";
+import type { Appearance } from "../theme";
 
 export function Settings({
   language,
   onLanguage,
+  appearance,
+  onAppearance,
 }: {
   language: Language;
   onLanguage: (language: Language) => void;
+  appearance: Appearance;
+  onAppearance: (appearance: Appearance) => void;
 }) {
   const t = useStrings();
   const [autostart, setAutostart] = useState<boolean | null>(null);
@@ -50,6 +55,30 @@ export function Settings({
         >
           <span />
         </button>
+      </section>
+
+      <section className="card setting-row">
+        <div>
+          <h3>{t.appearance}</h3>
+        </div>
+        <div className="segmented compact">
+          {(["system", "light", "dark"] as Appearance[]).map((value) => (
+            <button
+              key={value}
+              className={appearance === value ? "is-active" : ""}
+              onClick={() => onAppearance(value)}
+            >
+              {value === appearance && <span className="segment-bg" />}
+              <span className="segment-label">
+                {value === "system"
+                  ? t.appearanceSystem
+                  : value === "light"
+                    ? t.appearanceLight
+                    : t.appearanceDark}
+              </span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="card setting-row">

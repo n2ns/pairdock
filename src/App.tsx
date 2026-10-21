@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { isTauri, type PairedDevice } from "./api";
 import { type Language, resolveStrings, StringsContext } from "./i18n";
@@ -7,6 +7,7 @@ import { DeviceDetail } from "./pages/DeviceDetail";
 import { Devices } from "./pages/Devices";
 import { PairWizard } from "./pages/PairWizard";
 import { Settings } from "./pages/Settings";
+import { type Appearance, applyAppearance, storeAppearance, storedAppearance } from "./theme";
 
 type Route =
   | { name: "devices" }
@@ -30,6 +31,15 @@ export default function App() {
   const [route, setRoute] = useState<Route>({ name: "devices" });
   const [language, setLanguage] = useState<Language>(storedLanguage);
   const t = useMemo(() => resolveStrings(language), [language]);
+  const [appearance, setAppearance] = useState<Appearance>(storedAppearance);
+
+  // Before the first paint, so the page never shows the wrong theme.
+  useLayoutEffect(() => applyAppearance(appearance), [appearance]);
+
+  const changeAppearance = (next: Appearance) => {
+    setAppearance(next);
+    storeAppearance(next);
+  };
   const contentRef = useRef<HTMLElement>(null);
 
   // Every page starts at the top; the content pane keeps its scroll otherwise.
@@ -132,7 +142,14 @@ export default function App() {
               {route.name === "pair" && (
                 <PairWizard onDone={() => setRoute({ name: "devices" })} onCustomize={customize} />
               )}
-              {route.name === "settings" && <Settings language={language} onLanguage={changeLanguage} />}
+              {route.name === "settings" && (
+                <Settings
+                  language={language}
+                  onLanguage={changeLanguage}
+                  appearance={appearance}
+                  onAppearance={changeAppearance}
+                />
+              )}
             </motion.div>
           </AnimatePresence>
         </main>
