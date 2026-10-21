@@ -4,7 +4,7 @@ All notable changes to PairDock are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.0.2] - 2026-10-21
 
 ### Added
 
@@ -16,6 +16,8 @@ All notable changes to PairDock are listed here. The format follows
   `Win+Ctrl+Right`; macOS spaces: `Ctrl+Left` / `Ctrl+Right`), switching windows (`Alt+Tab`,
   `Cmd+Tab`), closing the window (`Alt+F4`, `Cmd+W`), the emoji panel (`Win+Period`,
   `Ctrl+Cmd+Space`), the app's windows on macOS (`Ctrl+Down`) and the previous track.
+- `pairdock-cli send <shortcut>` sends a shortcut the way a mapped button does, and
+  `scripts/smoke-shortcuts.ps1` checks what every Windows preset does.
 
 ### Changed
 

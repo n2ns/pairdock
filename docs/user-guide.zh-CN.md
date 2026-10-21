@@ -120,6 +120,8 @@ Bolt 设备需要用一串简短的确认码来完成配对，防止附近的人
 
 在 Mac 上，PairDock 的用法和 Windows 基本相同，区别如下。已在 Intel Mac 的 macOS 15 Sequoia 上测试，尚未测试的部分见[尚未在 macOS 上测试](#尚未在-macos-上测试)。
 
+<img src="images/macos.png" width="720" alt="macOS 上的 PairDock">
+
 ### 安装与首次启动
 
 1. Apple 芯片的 Mac 下载 `PairDock_x.y.z_aarch64.dmg`，Intel 芯片的 Mac 下载 `PairDock_x.y.z_x64.dmg`。打开后把 **PairDock** 拖进"应用程序"。
@@ -128,6 +130,8 @@ Bolt 设备需要用一串简短的确认码来完成配对，防止附近的人
 ### 菜单栏
 
 PairDock 在菜单栏里运行，不出现在程序坞中。点击它的图标（一只带轨道环的鼠标）会弹出菜单：**Open PairDock**（打开窗口）和 **Quit**（退出）。关闭窗口时 PairDock 继续运行；从"应用程序"里再次打开 PairDock 会显示窗口。
+
+**开机自动启动**会添加 `~/Library/LaunchAgents/PairDock.plist`，登录后 PairDock 在菜单栏中启动，不打开窗口。
 
 ### 允许发送快捷键
 
@@ -164,7 +168,6 @@ macOS 只允许拥有**辅助功能**权限的应用发送按键。配对、"改
 ### 尚未在 macOS 上测试
 
 - Apple 芯片的 Mac。
-- **开机自动启动**。
 - 在窗口里安装更新。
 - 配对键盘（Windows 上同样尚未测试）。
 

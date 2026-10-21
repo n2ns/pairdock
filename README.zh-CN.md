@@ -75,6 +75,10 @@ Logi Options+ 是一个庞大的套件，带着后台服务、自动更新、账
 
 macOS 用户请下载 `PairDock_x.y.z_aarch64.dmg`（Apple 芯片）或 `PairDock_x.y.z_x64.dmg`（Intel），打开后把 PairDock 拖进"应用程序"。应用暂时没有 Apple Developer ID 签名，首次打开需要点"仍要打开"，发送快捷键还需要"辅助功能"权限，步骤见[操作手册](docs/user-guide.zh-CN.md#macos)。
 
+<p align="center">
+  <img src="docs/images/macos.png" width="640" alt="macOS 上的 PairDock">
+</p>
+
 接下来请看[操作手册](docs/user-guide.zh-CN.md)。
 
 ## 常见问题

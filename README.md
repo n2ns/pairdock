@@ -90,6 +90,10 @@ On macOS, download `PairDock_x.y.z_aarch64.dmg` (Apple silicon) or `PairDock_x.y
 Developer ID yet, so the first start needs **Open Anyway**, and sending shortcuts needs the
 Accessibility permission; the [user guide](docs/user-guide.md#macos) walks through both.
 
+<p align="center">
+  <img src="docs/images/macos.png" width="640" alt="PairDock on macOS">
+</p>
+
 Then follow the [user guide](docs/user-guide.md).
 
 ## FAQ

@@ -151,6 +151,8 @@ The tray menu is in English only for now: **Open PairDock** (opens the window) a
 PairDock works the same way on a Mac, with these differences. It was tested on macOS 15
 Sequoia on an Intel Mac; see [Not tested yet](#not-tested-yet-on-macos).
 
+<img src="images/macos.png" width="720" alt="PairDock on macOS">
+
 ### Installing and the first start
 
 1. Download `PairDock_x.y.z_aarch64.dmg` for a Mac with Apple silicon or
@@ -166,6 +168,9 @@ Sequoia on an Intel Mac; see [Not tested yet](#not-tested-yet-on-macos).
 PairDock lives in the menu bar, not in the Dock. Click its icon (a mouse with an orbit) for the
 menu: **Open PairDock** and **Quit**. Closing the window keeps PairDock running; opening
 PairDock again from Applications shows the window.
+
+**Launch at startup** adds `~/Library/LaunchAgents/PairDock.plist`, which starts PairDock in the
+menu bar, without its window, when you log in.
 
 ### Allowing shortcuts
 
@@ -217,7 +222,6 @@ and remove PairDock from **System Settings → Privacy & Security → Accessibil
 ### Not tested yet on macOS
 
 - Macs with Apple silicon.
-- **Launch at startup**.
 - Installing an update from the window.
 - Pairing a keyboard (not tested on Windows either).
 
