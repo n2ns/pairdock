@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 
-import { api, type PairedDevice, type ReceiverSummary } from "../api";
+import { api, type Battery, type PairedDevice, type ReceiverSummary } from "../api";
+import { BatteryPill } from "../components/BatteryPill";
 import { DeviceGlyph } from "../components/DeviceGlyph";
 import { ReceiverRadar } from "../components/Illustrations";
 import { useStrings } from "../i18n";
@@ -102,6 +103,7 @@ export function Devices({ onCustomize, onPair }: Props) {
                     <span className="slot">#{device.slot}</span>
                   </div>
                   <h3>{device.name || "—"}</h3>
+                  {device.online && <CardBattery receiverId={receiver.id} slot={device.slot} />}
                   <p className="muted small">
                     <span className={`status-dot ${device.online ? "is-online" : ""}`} />
                     {device.kind === "Mouse"
@@ -170,4 +172,23 @@ export function Devices({ onCustomize, onPair }: Props) {
       </AnimatePresence>
     </div>
   );
+}
+
+/** Loads the battery of one online device after the list is shown; reading
+ * it takes a few round trips per device. */
+function CardBattery({ receiverId, slot }: { receiverId: string; slot: number }) {
+  const [battery, setBattery] = useState<Battery | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .deviceBattery(receiverId, slot)
+      .then((b) => alive && setBattery(b))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [receiverId, slot]);
+
+  return battery ? <BatteryPill battery={battery} compact /> : null;
 }

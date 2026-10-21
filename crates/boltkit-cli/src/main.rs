@@ -102,7 +102,7 @@ async fn list(api: &HidApi) -> Result<()> {
         println!("{} ({unique_id})", receiver.name());
 
         match &receiver {
-            Receiver::Bolt(bolt) => list_bolt(bolt).await?,
+            Receiver::Bolt(bolt) => list_bolt(bolt, &iface.id()).await?,
             _ => println!("  (listing devices is not supported for this receiver yet)"),
         }
     }
@@ -110,7 +110,7 @@ async fn list(api: &HidApi) -> Result<()> {
     Ok(())
 }
 
-async fn list_bolt(bolt: &bolt::Receiver) -> Result<()> {
+async fn list_bolt(bolt: &bolt::Receiver, receiver_id: &str) -> Result<()> {
     let count = bolt.count_pairings().await?;
     println!("  {count} paired device(s)");
 
@@ -119,10 +119,22 @@ async fn list_bolt(bolt: &bolt::Receiver) -> Result<()> {
             continue;
         };
         let name = bolt.get_device_codename(slot).await.unwrap_or_default();
+        let battery = if info.online {
+            match boltkit_core::inventory::device_battery(receiver_id, slot).await {
+                Ok(Some(b)) => match b.percent {
+                    Some(p) => format!("  battery {p}%{}", if b.charging { " (charging)" } else { "" }),
+                    None => format!("  battery {}", b.level),
+                },
+                _ => String::new(),
+            }
+        } else {
+            String::new()
+        };
         println!(
-            "  [{slot}] {name:<14} {:?}  wpid={:04X}  {}",
+            "  [{slot}] {name:<14} {:?}  wpid={:04X}  unit={}  {}{battery}",
             info.kind,
             info.wpid,
+            info.unit_id.iter().map(|b| format!("{b:02X}")).collect::<String>(),
             if info.online { "online" } else { "offline" },
         );
     }

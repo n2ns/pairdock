@@ -112,6 +112,13 @@ const en = {
   successTitle: "Paired!",
   successText: (name: string) => `${name} is connected to the receiver.`,
   successButtons: "Customize buttons",
+  staleTitle: (count: number) =>
+    count === 1 ? "This device left an old pairing behind" : `This device left ${count} old pairings behind`,
+  staleText:
+    "The receiver kept the slot from a previous pairing. The device won't use it again, so removing it frees the slot.",
+  staleSlots: (slots: string) => `Slot ${slots}`,
+  staleRemove: "Remove old pairing",
+  staleRemoved: "Old pairing removed",
   done: "Done",
   failedTitle: "Pairing did not work",
   failedHint:
@@ -242,6 +249,11 @@ const zh: typeof en = {
   successTitle: "配对成功！",
   successText: (name) => `${name} 已连接到接收器。`,
   successButtons: "设置按键",
+  staleTitle: (count: number) => `这台设备还留着 ${count} 个旧配对`,
+  staleText: "接收器保留了它之前配对时的槽位。设备不会再用那个槽位，移除后可以腾出位置。",
+  staleSlots: (slots: string) => `槽位 ${slots}`,
+  staleRemove: "清理旧配对",
+  staleRemoved: "已清理旧配对",
   done: "完成",
   failedTitle: "配对没有成功",
   failedHint: "多点或少点一下都会让接收器中止配对。请让设备重新进入配对模式后再试一次。",

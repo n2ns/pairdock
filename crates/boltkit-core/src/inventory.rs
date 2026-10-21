@@ -7,6 +7,7 @@ use hidpp::{
     channel::HidppChannel,
     device::Device,
     feature::{
+        CreatableFeature,
         reprog_controls::{ControlFlags, ReprogControlsFeature},
         unified_battery::{BatteryLevel, BatteryStatus, UnifiedBatteryFeature},
     },
@@ -40,6 +41,9 @@ pub struct PairedDevice {
     pub name: String,
     pub kind: bolt::DeviceKind,
     pub wpid: u16,
+    /// The device's serial number. Together with `wpid` it identifies one
+    /// physical device, e.g. to find slots it left behind when re-paired.
+    pub unit_id: String,
     pub online: bool,
 }
 
@@ -121,6 +125,7 @@ async fn bolt_devices(bolt: &bolt::Receiver) -> Vec<PairedDevice> {
             name,
             kind: info.kind,
             wpid: info.wpid,
+            unit_id: info.unit_id.iter().map(|b| format!("{b:02X}")).collect(),
             online: info.online,
         });
     }
@@ -147,22 +152,7 @@ pub async fn device_details(receiver_id: &str, slot: u8) -> Result<DeviceDetails
     with_timeout(device.enumerate_features()).await?;
 
     let battery = match device.get_feature::<UnifiedBatteryFeature>() {
-        Some(feature) => with_timeout(feature.get_battery_info())
-            .await
-            .ok()
-            .map(|info| Battery {
-                percent: (info.charging_percentage > 0).then_some(info.charging_percentage),
-                level: match info.level {
-                    BatteryLevel::Critical => "critical",
-                    BatteryLevel::Low => "low",
-                    BatteryLevel::Good => "good",
-                    _ => "full",
-                },
-                charging: matches!(
-                    info.status,
-                    BatteryStatus::Charging | BatteryStatus::ChargingSlow
-                ),
-            }),
+        Some(feature) => read_battery(&feature).await,
         None => None,
     };
 
@@ -200,6 +190,37 @@ pub async fn device_details(receiver_id: &str, slot: u8) -> Result<DeviceDetails
     }
 
     Ok(DeviceDetails { battery, controls })
+}
+
+/// Reads only the battery of an online device. Looks the battery feature up
+/// directly instead of enumerating every feature, so it stays quick enough
+/// for the device list.
+pub async fn device_battery(receiver_id: &str, slot: u8) -> Result<Option<Battery>, String> {
+    let (chan, _bolt) = open_bolt(receiver_id).await?;
+    let mut device = with_timeout(Device::new(chan, slot)).await?;
+    let Some(info) = with_timeout(device.root().get_feature(UnifiedBatteryFeature::ID)).await?
+    else {
+        return Ok(None);
+    };
+    let feature = device.add_feature::<UnifiedBatteryFeature>(info.index);
+    Ok(read_battery(&feature).await)
+}
+
+async fn read_battery(feature: &UnifiedBatteryFeature) -> Option<Battery> {
+    let info = with_timeout(feature.get_battery_info()).await.ok()?;
+    Some(Battery {
+        percent: (info.charging_percentage > 0).then_some(info.charging_percentage),
+        level: match info.level {
+            BatteryLevel::Critical => "critical",
+            BatteryLevel::Low => "low",
+            BatteryLevel::Good => "good",
+            _ => "full",
+        },
+        charging: matches!(
+            info.status,
+            BatteryStatus::Charging | BatteryStatus::ChargingSlow
+        ),
+    })
 }
 
 async fn with_timeout<T, E: std::fmt::Display>(

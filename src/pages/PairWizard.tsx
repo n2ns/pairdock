@@ -157,22 +157,13 @@ export function PairWizard({ onDone, onCustomize }: Props) {
           {phase === "confirm" && (
             <Confirm prompt={prompt} presses={presses} submitted={submitted} device={device} />
           )}
-          {phase === "success" && device && (
+          {phase === "success" && device && receiverId && slot !== null && (
             <Success
+              receiverId={receiverId}
+              slot={slot}
               name={device.name}
               onDone={onDone}
-              onCustomize={
-                receiverId && slot !== null && device.kind === "Mouse"
-                  ? () =>
-                      onCustomize(receiverId, {
-                        slot,
-                        name: device.name,
-                        kind: device.kind,
-                        wpid: device.wpid,
-                        online: true,
-                      })
-                  : undefined
-              }
+              onCustomize={(paired) => onCustomize(receiverId, paired)}
             />
           )}
           {phase === "failed" && <Failed reason={error} onRetry={start} />}
@@ -386,15 +377,55 @@ function ClickIcon({ side }: { side: "left" | "right" | "both" }) {
 }
 
 function Success({
+  receiverId,
+  slot,
   name,
   onDone,
   onCustomize,
 }: {
+  receiverId: string;
+  slot: number;
   name: string;
   onDone: () => void;
-  onCustomize?: () => void;
+  onCustomize: (device: PairedDevice) => void;
 }) {
   const t = useStrings();
+  const [paired, setPaired] = useState<PairedDevice | null>(null);
+  // Slots this device left behind in earlier pairings: same model and serial.
+  const [stale, setStale] = useState<PairedDevice[]>([]);
+  const [cleanup, setCleanup] = useState<"idle" | "busy" | "done">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .listReceivers()
+      .then((receivers) => {
+        const devices = receivers.find((r) => r.id === receiverId)?.devices ?? [];
+        const self = devices.find((d) => d.slot === slot) ?? null;
+        setPaired(self);
+        if (self?.unitId) {
+          setStale(
+            devices.filter(
+              (d) => d.slot !== slot && d.wpid === self.wpid && d.unitId === self.unitId,
+            ),
+          );
+        }
+      })
+      .catch(() => {});
+  }, [receiverId, slot]);
+
+  const removeStale = async () => {
+    setCleanup("busy");
+    setError(null);
+    try {
+      for (const d of stale) await api.unpair(receiverId, d.slot);
+      setCleanup("done");
+    } catch (e) {
+      setError(String(e));
+      setCleanup("idle");
+    }
+  };
+
   return (
     <div className="stage-center success">
       <div className="burst">
@@ -408,9 +439,36 @@ function Success({
       </div>
       <h2>{t.successTitle}</h2>
       <p className="muted">{t.successText(name)}</p>
+
+      {stale.length > 0 && (
+        <motion.div
+          className="stale-card"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          {cleanup === "done" ? (
+            <p className="stale-done">✓ {t.staleRemoved}</p>
+          ) : (
+            <>
+              <div>
+                <strong>{t.staleTitle(stale.length)}</strong>
+                <p className="muted small">
+                  {t.staleSlots(stale.map((d) => `#${d.slot}`).join(", "))} · {t.staleText}
+                </p>
+                {error && <p className="error small">{error}</p>}
+              </div>
+              <button className="btn" disabled={cleanup === "busy"} onClick={removeStale}>
+                {t.staleRemove}
+              </button>
+            </>
+          )}
+        </motion.div>
+      )}
+
       <div className="actions">
-        {onCustomize && (
-          <button className="btn btn-primary btn-lg" onClick={onCustomize}>
+        {paired?.kind === "Mouse" && (
+          <button className="btn btn-primary btn-lg" onClick={() => onCustomize(paired)}>
             {t.successButtons}
           </button>
         )}

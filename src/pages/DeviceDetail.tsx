@@ -10,6 +10,7 @@ import {
   type DeviceDetails,
   type PairedDevice,
 } from "../api";
+import { BatteryPill } from "../components/BatteryPill";
 import { DeviceGlyph } from "../components/DeviceGlyph";
 import { MouseArt, type MousePart, partForControl } from "../components/MouseArt";
 import { MouseSideArt } from "../components/MouseSideArt";
@@ -383,25 +384,6 @@ function ActionEditor({
           </div>
         </>
       )}
-    </div>
-  );
-}
-
-function BatteryPill({ battery }: { battery: NonNullable<DeviceDetails["battery"]> }) {
-  const t = useStrings();
-  const percent = battery.percent ?? { critical: 5, low: 20, good: 60, full: 100 }[battery.level];
-  return (
-    <div className={`battery battery-${battery.level}`} title={t.battery}>
-      <span className="battery-shell">
-        <motion.span
-          className="battery-fill"
-          initial={{ width: 0 }}
-          animate={{ width: `${percent}%` }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        />
-      </span>
-      <span>{battery.percent !== null ? `${battery.percent}%` : t.battery}</span>
-      {battery.charging && <span className="muted">· {t.charging}</span>}
     </div>
   );
 }

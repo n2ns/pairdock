@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use boltkit_core::{
     config::{ButtonAction, Config},
-    inventory::{self, DeviceDetails, ReceiverSummary},
+    inventory::{self, Battery, DeviceDetails, ReceiverSummary},
     keys::parse_shortcut,
     pairing::{BoltPairing, PairingEvent},
 };
@@ -23,6 +23,11 @@ pub async fn list_receivers() -> Result<Vec<ReceiverSummary>, String> {
 #[tauri::command]
 pub async fn device_details(receiver_id: String, slot: u8) -> Result<DeviceDetails, String> {
     inventory::device_details(&receiver_id, slot).await
+}
+
+#[tauri::command]
+pub async fn device_battery(receiver_id: String, slot: u8) -> Result<Option<Battery>, String> {
+    inventory::device_battery(&receiver_id, slot).await
 }
 
 #[tauri::command]

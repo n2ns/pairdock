@@ -19,6 +19,8 @@ export interface PairedDevice {
   name: string;
   kind: DeviceKind;
   wpid: number;
+  /** Serial number; with `wpid` it identifies one physical device. */
+  unitId: string;
   online: boolean;
 }
 
@@ -85,6 +87,7 @@ export type PairingEvent =
 interface Backend {
   listReceivers(): Promise<ReceiverSummary[]>;
   deviceDetails(receiverId: string, slot: number): Promise<DeviceDetails>;
+  deviceBattery(receiverId: string, slot: number): Promise<Battery | null>;
   unpair(receiverId: string, slot: number): Promise<void>;
   startPairing(receiverId: string): Promise<void>;
   pairDevice(address: Address): Promise<void>;
@@ -100,6 +103,7 @@ export const isTauri = "__TAURI_INTERNALS__" in window;
 const tauriBackend: Backend = {
   listReceivers: () => invoke("list_receivers"),
   deviceDetails: (receiverId, slot) => invoke("device_details", { receiverId, slot }),
+  deviceBattery: (receiverId, slot) => invoke("device_battery", { receiverId, slot }),
   unpair: (receiverId, slot) => invoke("unpair", { receiverId, slot }),
   startPairing: (receiverId) => invoke("start_pairing", { receiverId }),
   pairDevice: (address) => invoke("pair_device", { address }),
@@ -120,8 +124,8 @@ const demoReceivers: ReceiverSummary[] = [
     uniqueId: "BFBE733454918F8B",
     supported: true,
     devices: [
-      { slot: 1, name: "Alto Keys K98M", kind: "Keyboard", wpid: 0xb38e, online: false },
-      { slot: 2, name: "Logi M650", kind: "Mouse", wpid: 0xb02a, online: true },
+      { slot: 1, name: "Alto Keys K98M", kind: "Keyboard", wpid: 0xb38e, unitId: "98596211", online: false },
+      { slot: 2, name: "Logi M650", kind: "Mouse", wpid: 0xb02a, unitId: "CA438174", online: true },
     ],
   },
 ];
@@ -160,6 +164,10 @@ const demoBackend: Backend = {
     if (device?.kind !== "Mouse") return { battery: null, controls: [] };
     return { battery: { percent: 80, level: "good", charging: false }, controls: demoControls };
   },
+  async deviceBattery(_receiverId, slot) {
+    await wait(700);
+    return slot === 2 || slot === 3 ? { percent: 80, level: "good", charging: false } : null;
+  },
   async unpair(_receiverId, slot) {
     await wait(300);
     demoReceivers[0].devices = demoReceivers[0].devices.filter((d) => d.slot !== slot);
@@ -183,6 +191,14 @@ const demoBackend: Backend = {
     );
     const end = 2400 + clicks.length * 1100 + 1200;
     demoEmit({ type: "passkeyProgress", address: demoAddress, press: "submitted" }, end);
+    // Re-pairing the M650 leaves its old slot behind, like the real receiver.
+    demoTimers.push(
+      window.setTimeout(() => {
+        const devices = demoReceivers[0].devices;
+        devices.forEach((d) => (d.online = false));
+        devices.push({ slot: 3, name: "Logi M650", kind: "Mouse", wpid: 0xb02a, unitId: "CA438174", online: true });
+      }, end + 850),
+    );
     demoEmit({ type: "paired", slot: 3 }, end + 900);
   },
   async stopPairing() {

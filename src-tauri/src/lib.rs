@@ -62,6 +62,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::list_receivers,
             commands::device_details,
+            commands::device_battery,
             commands::unpair,
             commands::start_pairing,
             commands::pair_device,
