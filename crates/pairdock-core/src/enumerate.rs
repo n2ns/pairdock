@@ -39,7 +39,7 @@ impl ReceiverInterface {
     }
 }
 
-/// Lists all connected receivers that boltkit knows how to talk to.
+/// Lists all connected receivers that pairdock knows how to talk to.
 pub fn list_receivers(api: &HidApi) -> Vec<ReceiverInterface> {
     let mut found: BTreeMap<String, ReceiverInterface> = BTreeMap::new();
 

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use anyhow::{Context, Result, bail};
-use boltkit_core::{
+use pairdock_core::{
     enumerate::{ChannelRole, list_receivers, open_receiver},
     hidpp::receiver::{Receiver, bolt},
     pairing::{BoltPairing, Click, PairingEvent, PasskeyPress, PasskeyPrompt},
@@ -63,7 +63,7 @@ async fn main() -> Result<()> {
         let file = std::fs::File::create(path)
             .with_context(|| format!("could not create {}", path.display()))?;
         tracing_subscriber::fmt()
-            .with_env_filter("boltkit_core=trace")
+            .with_env_filter("pairdock_core=trace")
             .with_writer(std::sync::Mutex::new(file))
             .with_ansi(false)
             .init();
@@ -120,7 +120,7 @@ async fn list_bolt(bolt: &bolt::Receiver, receiver_id: &str) -> Result<()> {
         };
         let name = bolt.get_device_codename(slot).await.unwrap_or_default();
         let battery = if info.online {
-            match boltkit_core::inventory::device_battery(receiver_id, slot).await {
+            match pairdock_core::inventory::device_battery(receiver_id, slot).await {
                 Ok(Some(b)) => match b.percent {
                     Some(p) => format!("  battery {p}%{}", if b.charging { " (charging)" } else { "" }),
                     None => format!("  battery {}", b.level),
@@ -146,7 +146,7 @@ async fn list_bolt(bolt: &bolt::Receiver, receiver_id: &str) -> Result<()> {
 /// for Bolt so far.
 async fn first_bolt(
     api: &HidApi,
-) -> Result<(std::sync::Arc<boltkit_core::hidpp::channel::HidppChannel>, bolt::Receiver)> {
+) -> Result<(std::sync::Arc<pairdock_core::hidpp::channel::HidppChannel>, bolt::Receiver)> {
     for iface in list_receivers(api) {
         let (chan, receiver) = open_receiver(api, &iface, ChannelRole::Shared).await?;
         if let Receiver::Bolt(bolt) = receiver {
@@ -248,7 +248,7 @@ async fn unpair(api: &HidApi, slot: u8) -> Result<()> {
 }
 
 async fn info(api: &HidApi, slot: u8) -> Result<()> {
-    use boltkit_core::{
+    use pairdock_core::{
         controls::control_name,
         hidpp::{
             device::Device,
@@ -316,7 +316,7 @@ async fn info(api: &HidApi, slot: u8) -> Result<()> {
 }
 
 async fn run(path: &std::path::Path) -> Result<()> {
-    use boltkit_core::{config::Config, remap::RemapEngine};
+    use pairdock_core::{config::Config, remap::RemapEngine};
 
     let text = std::fs::read_to_string(path)
         .with_context(|| format!("could not read {}", path.display()))?;
@@ -335,7 +335,7 @@ async fn run(path: &std::path::Path) -> Result<()> {
 const RESTORE_LIMIT: Duration = Duration::from_secs(3);
 
 async fn reset() -> Result<()> {
-    use boltkit_core::{config::Config, remap::RemapEngine};
+    use pairdock_core::{config::Config, remap::RemapEngine};
 
     // Starting with an empty configuration applies the defaults; give the
     // engine a moment to find the receivers before stopping it.

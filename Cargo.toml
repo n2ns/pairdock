@@ -2,8 +2,8 @@
 resolver = "2"
 members = [
     "crates/hidpp",
-    "crates/boltkit-core",
-    "crates/boltkit-cli",
+    "crates/pairdock-core",
+    "crates/pairdock-cli",
     "src-tauri",
 ]
 
@@ -13,7 +13,7 @@ license = "MIT"
 
 [workspace.dependencies]
 hidpp = { path = "crates/hidpp", features = ["serde"] }
-boltkit-core = { path = "crates/boltkit-core" }
+pairdock-core = { path = "crates/pairdock-core" }
 
 anyhow = "1.0.104"
 async-channel = "2.5.0"

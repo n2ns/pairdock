@@ -1,5 +1,5 @@
 [package]
-name = "boltkit-core"
+name = "pairdock-core"
 version = "0.1.0"
 description = "Receiver pairing and device configuration for Logitech HID++ devices"
 edition.workspace = true

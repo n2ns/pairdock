@@ -3,12 +3,12 @@
 
 use std::{
     collections::HashMap,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
     time::Duration,
 };
 
-use boltkit_core::{
+use pairdock_core::{
     config::Config,
     hidpp::channel::HidppChannel,
     pairing::{BoltPairing, Discovered},
@@ -33,10 +33,41 @@ pub struct PairingSession {
     pub discovered: DiscoveredDevices,
 }
 
+/// The app identifier before the project was renamed to PairDock. Its config
+/// directory may still hold the user's button settings.
+const LEGACY_IDENTIFIER: &str = "dev.boltkit.app";
+
+/// Copies the configuration from the pre-rename config directory, once: only
+/// when the current one has none yet. The old file is left in place.
+fn migrate_legacy_config(config_path: &Path) {
+    if config_path.exists() {
+        return;
+    }
+    let Some(legacy) = config_path
+        .parent()
+        .and_then(Path::parent)
+        .map(|dir| dir.join(LEGACY_IDENTIFIER).join("config.json"))
+    else {
+        return;
+    };
+    if !legacy.exists() {
+        return;
+    }
+    let copied = config_path
+        .parent()
+        .map_or(Ok(()), std::fs::create_dir_all)
+        .and_then(|()| std::fs::copy(&legacy, config_path));
+    match copied {
+        Ok(_) => tracing::info!("migrated settings from {}", legacy.display()),
+        Err(err) => tracing::warn!("could not migrate {}: {err}", legacy.display()),
+    }
+}
+
 impl AppState {
     /// Reads the configuration and starts the remapping engine.
     pub fn load(app: &AppHandle) -> tauri::Result<Self> {
         let config_path = app.path().app_config_dir()?.join("config.json");
+        migrate_legacy_config(&config_path);
         let config = match std::fs::read_to_string(&config_path) {
             Ok(text) => serde_json::from_str(&text).unwrap_or_else(|err| {
                 tracing::warn!("ignoring invalid {}: {err}", config_path.display());

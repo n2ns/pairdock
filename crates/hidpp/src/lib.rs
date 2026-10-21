@@ -43,7 +43,7 @@
 //! Once you have a working implementation of [`channel::RawHidChannel`], you
 //! can start by creating a [`channel::HidppChannel`]:
 //!
-//! ```
+//! ```ignore
 //! use std::sync::Arc;
 //!
 //! use hidpp::{

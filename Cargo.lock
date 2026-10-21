@@ -357,55 +357,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "boltkit"
-version = "0.1.0"
-dependencies = [
- "boltkit-core",
- "hidpp",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-opener",
- "tauri-plugin-single-instance",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "boltkit-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "boltkit-core",
- "clap",
- "hidapi",
- "hidpp",
- "serde_json",
- "tokio",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "boltkit-core"
-version = "0.1.0"
-dependencies = [
- "async-channel",
- "async-trait",
- "enigo",
- "futures",
- "hidapi",
- "hidpp",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "tokio",
- "tracing",
-]
-
-[[package]]
 name = "brotli"
 version = "9.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2853,6 +2804,56 @@ dependencies = [
  "objc2-foundation",
  "objc2-ui-kit",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "pairdock"
+version = "0.1.0"
+dependencies = [
+ "auto-launch",
+ "hidpp",
+ "pairdock-core",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-opener",
+ "tauri-plugin-single-instance",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "pairdock-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "hidapi",
+ "hidpp",
+ "pairdock-core",
+ "serde_json",
+ "tokio",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "pairdock-core"
+version = "0.1.0"
+dependencies = [
+ "async-channel",
+ "async-trait",
+ "enigo",
+ "futures",
+ "hidapi",
+ "hidpp",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]

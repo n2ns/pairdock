@@ -8,7 +8,7 @@ import { isTauri } from "./api";
 
 export type Appearance = "system" | "light" | "dark";
 
-const KEY = "boltkit.appearance";
+const KEY = "pairdock.appearance";
 const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
 
 export function storedAppearance(): Appearance {

@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use boltkit_core::{
+use pairdock_core::{
     config::{ButtonAction, Config},
     inventory::{self, Battery, DeviceDetails, ReceiverSummary},
     keys::parse_shortcut,

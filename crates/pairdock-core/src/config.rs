@@ -27,19 +27,19 @@ pub enum ButtonAction {
     Default,
 
     /// Perform another control's action. Stored on the device, so it keeps
-    /// working without boltkit running (until the device reconnects).
+    /// working without pairdock running (until the device reconnects).
     Remap { to: u16 },
 
     /// Send a keyboard shortcut such as `Ctrl+C` while the button is held.
-    /// Needs boltkit running.
+    /// Needs pairdock running.
     Shortcut { keys: String },
 
-    /// Do nothing. Needs boltkit running.
+    /// Do nothing. Needs pairdock running.
     Disabled,
 }
 
 impl ButtonAction {
-    /// Whether the button has to be diverted to boltkit for this action.
+    /// Whether the button has to be diverted to pairdock for this action.
     pub fn needs_divert(&self) -> bool {
         matches!(self, Self::Shortcut { .. } | Self::Disabled)
     }

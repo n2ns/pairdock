@@ -12,11 +12,11 @@ use tauri::{
     webview::PageLoadEvent,
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
-use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 
 use crate::state::AppState;
 
-/// Passed by the autostart entry so that boltkit starts in the tray.
+/// Passed by the autostart entry so that pairdock starts in the tray.
 const MINIMIZED_ARG: &str = "--minimized";
 
 /// How long quitting may take to restore diverted buttons.
@@ -36,6 +36,8 @@ pub fn run() {
         ))
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            #[cfg(windows)]
+            migrate_legacy_autostart(app.handle());
             let state = AppState::load(app.handle())?;
             app.manage(state);
             build_tray(app.handle())?;
@@ -52,7 +54,7 @@ pub fn run() {
             }
         })
         .on_window_event(|window, event| {
-            // Closing the window keeps boltkit running in the tray; the remapping
+            // Closing the window keeps pairdock running in the tray; the remapping
             // engine has to stay alive for shortcuts to work.
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
@@ -72,11 +74,11 @@ pub fn run() {
             commands::set_button,
         ])
         .build(tauri::generate_context!())
-        .expect("error while building the boltkit app");
+        .expect("error while building the pairdock app");
 
     app.run(|_app, event| {
         if let RunEvent::ExitRequested { code: None, api, .. } = event {
-            // Only the tray's "Quit" ends boltkit (it exits with a code after
+            // Only the tray's "Quit" ends pairdock (it exits with a code after
             // restoring the buttons). The OS ending the session never gets
             // here: the windows answer WM_QUERYENDSESSION right away and
             // nothing blocks shutting down.
@@ -85,13 +87,37 @@ pub fn run() {
     });
 }
 
+/// Replaces the autostart entry of the app's pre-rename build ("boltkit"),
+/// which points at an executable that no longer exists, with PairDock's own.
+#[cfg(windows)]
+fn migrate_legacy_autostart(app: &AppHandle) {
+    let Ok(exe) = std::env::current_exe() else { return };
+    let Ok(legacy) = auto_launch::AutoLaunchBuilder::new()
+        .set_app_name("boltkit")
+        .set_app_path(&exe.to_string_lossy())
+        .build()
+    else {
+        return;
+    };
+    if !legacy.is_enabled().unwrap_or(false) {
+        return;
+    }
+    if let Err(err) = legacy.disable() {
+        tracing::warn!("could not remove the old autostart entry: {err}");
+        return;
+    }
+    if let Err(err) = app.autolaunch().enable() {
+        tracing::warn!("could not enable autostart: {err}");
+    }
+}
+
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, "open", "Open BoltKit", true, None::<&str>)?;
+    let open = MenuItem::with_id(app, "open", "Open PairDock", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &quit_item])?;
 
     let mut tray = TrayIconBuilder::with_id("main")
-        .tooltip("BoltKit")
+        .tooltip("PairDock")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {

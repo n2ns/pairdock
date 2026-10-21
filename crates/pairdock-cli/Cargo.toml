@@ -1,16 +1,16 @@
 [package]
-name = "boltkit-cli"
+name = "pairdock-cli"
 version = "0.1.0"
-description = "Command-line interface for boltkit"
+description = "Command-line interface for pairdock"
 edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "boltkit-cli"
+name = "pairdock-cli"
 path = "src/main.rs"
 
 [dependencies]
-boltkit-core.workspace = true
+pairdock-core.workspace = true
 hidpp.workspace = true
 
 anyhow.workspace = true

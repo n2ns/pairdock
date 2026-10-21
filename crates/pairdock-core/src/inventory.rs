@@ -29,7 +29,7 @@ pub struct ReceiverSummary {
     pub id: String,
     pub name: String,
     pub unique_id: String,
-    /// Whether boltkit can pair, unpair and list devices on this receiver.
+    /// Whether pairdock can pair, unpair and list devices on this receiver.
     pub supported: bool,
     pub devices: Vec<PairedDevice>,
 }
@@ -69,7 +69,7 @@ pub struct Battery {
 pub struct Control {
     pub cid: u16,
     pub name: Option<&'static str>,
-    /// Can be turned into a shortcut (needs boltkit running).
+    /// Can be turned into a shortcut (needs pairdock running).
     pub divertable: bool,
     /// Can perform another control's action on the device itself.
     pub remappable: bool,

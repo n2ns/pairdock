@@ -15,7 +15,7 @@ type Route =
   | { name: "pair" }
   | { name: "settings" };
 
-const LANGUAGE_KEY = "boltkit.language";
+const LANGUAGE_KEY = "pairdock.language";
 
 function storedLanguage(): Language {
   try {
@@ -100,7 +100,7 @@ export default function App() {
         <aside className="sidebar">
           <div className="brand">
             <img src="/icon.svg" alt="" width="36" height="36" />
-            <strong>BoltKit</strong>
+            <strong>PairDock</strong>
           </div>
           <nav>
             {nav.map((item) => (

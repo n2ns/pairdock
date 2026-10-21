@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "BoltKit",
+  "productName": "PairDock",
   "version": "0.1.0",
-  "identifier": "dev.boltkit.app",
+  "identifier": "dev.pairdock.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "BoltKit",
+        "title": "PairDock",
         "width": 1080,
         "height": 720,
         "minWidth": 880,

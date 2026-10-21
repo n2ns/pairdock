@@ -1,4 +1,4 @@
-//! Core library of boltkit: talks to Logitech receivers and devices over
+//! Core library of pairdock: talks to Logitech receivers and devices over
 //! HID++ using nothing but the operating system's generic HID driver.
 //!
 //! The protocol itself lives in the vendored [`hidpp`] crate. This crate adds
