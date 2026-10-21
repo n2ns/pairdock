@@ -55,7 +55,7 @@ only receives the request once it wakes up). If PairDock ever exits without that
 `pairdock-cli reset` restores every button.
 
 The button settings are stored per device model in `config.json` in the app's
-config directory (`%APPDATA%\dev.pairdock.app` on Windows).
+config directory (`%APPDATA%\dev.pairdock.desktop` on Windows).
 
 ## Command-line tool
 

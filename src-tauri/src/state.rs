@@ -116,3 +116,40 @@ impl AppState {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use super::{LEGACY_IDENTIFIER, migrate_legacy_config};
+
+    #[test]
+    fn copies_the_legacy_config_once() {
+        let root = std::env::temp_dir().join(format!("pairdock-migrate-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let legacy = root.join(LEGACY_IDENTIFIER);
+        fs::create_dir_all(&legacy).unwrap();
+        fs::write(legacy.join("config.json"), r#"{"devices":{}}"#).unwrap();
+        let current = root.join("dev.pairdock.desktop").join("config.json");
+
+        migrate_legacy_config(&current);
+        assert_eq!(fs::read_to_string(&current).unwrap(), r#"{"devices":{}}"#);
+
+        // An existing config is never overwritten.
+        fs::write(&current, "mine").unwrap();
+        migrate_legacy_config(&current);
+        assert_eq!(fs::read_to_string(&current).unwrap(), "mine");
+
+        fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn does_nothing_without_a_legacy_config() {
+        let root = std::env::temp_dir().join(format!("pairdock-fresh-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let current = root.join("dev.pairdock.desktop").join("config.json");
+
+        migrate_legacy_config(&current);
+        assert!(!current.exists());
+    }
+}
