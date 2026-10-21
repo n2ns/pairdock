@@ -100,19 +100,15 @@ export function Devices({ onCustomize, onPair }: Props) {
                 >
                   <div className="device-card-top">
                     <DeviceGlyph kind={device.kind} />
-                    <span className="slot">#{device.slot}</span>
+                    <div className="device-card-title">
+                      <h3>{device.name || "—"}</h3>
+                      <p className="muted small device-status">
+                        <span className={`status-dot ${device.online ? "is-online" : ""}`} />
+                        {device.online ? t.online : t.offline}
+                        {device.online && <CardBattery receiverId={receiver.id} slot={device.slot} />}
+                      </p>
+                    </div>
                   </div>
-                  <h3>{device.name || "—"}</h3>
-                  {device.online && <CardBattery receiverId={receiver.id} slot={device.slot} />}
-                  <p className="muted small">
-                    <span className={`status-dot ${device.online ? "is-online" : ""}`} />
-                    {device.kind === "Mouse"
-                      ? t.kindMouse
-                      : device.kind === "Keyboard"
-                        ? t.kindKeyboard
-                        : t.kindOther}{" "}
-                    · {device.online ? t.online : t.offline}
-                  </p>
                   <div className="device-card-actions">
                     {device.kind === "Mouse" && (
                       <button className="btn btn-primary" onClick={() => onCustomize(receiver.id, device)}>
@@ -190,5 +186,11 @@ function CardBattery({ receiverId, slot }: { receiverId: string; slot: number })
     };
   }, [receiverId, slot]);
 
-  return battery ? <BatteryPill battery={battery} compact /> : null;
+  if (!battery) return null;
+  return (
+    <>
+      <span className="status-sep">·</span>
+      <BatteryPill battery={battery} compact />
+    </>
+  );
 }

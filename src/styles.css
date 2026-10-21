@@ -592,6 +592,8 @@ nav {
 .device-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  /* Every card, the "pair a new device" one included, gets the same height. */
+  grid-auto-rows: 1fr;
   gap: 14px;
 }
 
@@ -612,30 +614,46 @@ nav {
 
 .device-card-top {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 6px;
+  align-items: center;
+  gap: 12px;
 }
 
-.slot {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--surface-sunken);
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
+.device-card-title {
+  min-width: 0;
+}
+
+.device-card-title h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-status {
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.status-sep {
+  margin: 0 6px;
+}
+
+.device-status .status-dot {
+  vertical-align: 0;
 }
 
 .device-card-actions {
   display: flex;
   gap: 6px;
-  margin-top: 10px;
+  /* Pinned to the bottom so the buttons line up across cards. */
+  margin-top: auto;
+  padding-top: 16px;
 }
 
 .add-card {
   align-items: center;
   justify-content: center;
-  min-height: 170px;
   border-style: dashed;
   border-color: var(--border-strong);
   background: transparent;
@@ -714,11 +732,14 @@ nav {
 }
 
 .battery-compact {
-  align-self: flex-start;
+  gap: 6px;
+  margin-left: 0;
   padding: 0;
   border: 0;
   background: none;
-  font-size: 12.5px;
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .battery-shell {
