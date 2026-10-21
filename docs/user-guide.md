@@ -126,6 +126,13 @@ changed.
   right away.
 - **Appearance**: follow the Windows theme, or always use light or dark.
 - **Language**: follow Windows, or always use 中文 or English.
+- **Check for updates at startup**: on by default. When a newer version is on GitHub,
+  PairDock asks whether to install it; nothing is downloaded until you click **Install and
+  restart**. Installing returns the buttons to their defaults, runs the installer and starts
+  PairDock again, which applies your button settings again; the settings themselves are kept.
+- **Updates → Check for updates**: checks right away. See [PRIVACY.md](../PRIVACY.md) for what
+  the check sends.
+- **Source code on GitHub** and **Star on GitHub** open the project page in your browser.
 
 ## The tray and quitting
 

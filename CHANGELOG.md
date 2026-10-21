@@ -4,7 +4,7 @@ All notable changes to PairDock are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [0.0.1] - Unreleased
+## [0.0.1] - 2026-10-21
 
 First public version.
 
@@ -19,3 +19,5 @@ First public version.
 - Tray app with launch at startup; buttons are restored when quitting.
 - Light and dark appearance, English and Chinese interface.
 - `pairdock-cli` command-line tool with protocol tracing.
+- Update check on GitHub at startup (can be turned off) and in Settings; updates are signed and
+  installed only after confirmation.

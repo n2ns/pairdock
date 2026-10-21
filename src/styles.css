@@ -1723,6 +1723,20 @@ kbd {
   margin: 4px 0 0;
 }
 
+.about a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.about a:hover {
+  text-decoration: underline;
+}
+
+.about-star {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 /* ---------------------------------------------------------------- narrow */
 
 @media (max-width: 860px) {

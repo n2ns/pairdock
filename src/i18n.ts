@@ -132,8 +132,25 @@ const en = {
   appearanceDark: "Dark",
   language: "Language",
   languageAuto: "System",
+  updates: "Updates",
+  autoUpdate: "Check for updates at startup",
+  autoUpdateHint:
+    "Asks GitHub whether a newer version is available. Nothing is installed without your confirmation.",
+  checkUpdate: "Check for updates",
+  checkingUpdate: "Checking…",
+  upToDate: "PairDock is up to date.",
+  updateCheckFailed: "Could not check for updates.",
+  updateAvailable: (version: string) => `PairDock ${version} is available`,
+  updateText: (current: string) =>
+    `You have ${current}. Installing returns the buttons to their defaults, runs the installer and restarts PairDock, which applies your button settings again.`,
+  updateInstall: "Install and restart",
+  updateLater: "Later",
+  updateDownloading: "Downloading…",
+  updateInstallFailed: "The update could not be installed.",
   aboutText:
     "PairDock pairs devices and customizes buttons on Logitech receivers using the system's built-in HID driver. Open source under the MIT license.",
+  sourceCode: "Source code on GitHub",
+  starOnGithub: "Star on GitHub",
   demoMode: "Demo mode: showing simulated devices because PairDock is running in a browser.",
 };
 
@@ -263,8 +280,24 @@ const zh: typeof en = {
   appearanceDark: "深色",
   language: "语言",
   languageAuto: "跟随系统",
+  updates: "更新",
+  autoUpdate: "启动时检查更新",
+  autoUpdateHint: "向 GitHub 查询是否有新版本。不经你确认不会安装。",
+  checkUpdate: "检查更新",
+  checkingUpdate: "正在检查…",
+  upToDate: "已是最新版本。",
+  updateCheckFailed: "无法检查更新。",
+  updateAvailable: (version: string) => `PairDock ${version} 已发布`,
+  updateText: (current: string) =>
+    `当前版本 ${current}。安装时会先把按键恢复为默认功能，然后运行安装程序并重新启动 PairDock，重启后按键设置会重新生效。`,
+  updateInstall: "安装并重启",
+  updateLater: "稍后",
+  updateDownloading: "正在下载…",
+  updateInstallFailed: "更新没有安装成功。",
   aboutText:
     "PairDock 通过系统自带的 HID 驱动，为罗技接收器配对设备、自定义按键。以 MIT 许可证开源。",
+  sourceCode: "GitHub 上的源代码",
+  starOnGithub: "在 GitHub 上点 Star",
   demoMode: "演示模式：当前在浏览器中运行，显示的是模拟设备。",
 };
 

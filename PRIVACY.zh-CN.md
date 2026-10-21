@@ -2,11 +2,21 @@
 
 [English](PRIVACY.md)
 
-PairDock 是一个纯本地工具：不需要账号，不收集使用数据，不上报崩溃信息，没有广告，也不连接互联网。
+PairDock 是一个本地工具：不需要账号，不收集使用数据，不上报崩溃信息，没有广告。它唯一会连接的是 GitHub，用来检查更新，而且可以关闭。
 
 ## 网络
 
-PairDock 不发起任何网络请求。它的界面随程序一起打包，运行在 Microsoft Edge WebView2 中，PairDock 不会让 WebView2 从互联网加载任何内容。
+PairDock 联网只有一个用途：到 GitHub 检查是否有新版本。
+
+- **什么时候**：每次启动时检查一次（可在设置里关闭"启动时检查更新"），以及你点击"检查更新"时。
+- **请求什么**：文件 `https://github.com/n2ns/pairdock/releases/latest/download/latest.json`，里面列出最新版本号，由 GitHub 的下载服务器提供。请求里不包含任何关于你、你的设备或设置的信息；和所有网络请求一样，对方能看到你的 IP 地址，请求标识为 `tauri-plugin-updater/<版本号>`（更新组件的版本）。
+- **下载更新**：只有在你点击"安装并重启"之后才会下载。PairDock 从同一个 GitHub 发布页下载安装程序，并在运行前校验它的签名。
+
+设置页里的"GitHub 上的源代码"链接和"在 GitHub 上点 Star"按钮会在你的浏览器中打开仓库页面，PairDock 本身不发送任何内容。
+
+GitHub 如何处理这些请求，适用 [GitHub 隐私声明](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement)。关闭"启动时检查更新"后，除非你手动点击"检查更新"，PairDock 不会发起任何网络请求。
+
+它的界面随程序一起打包，运行在 Microsoft Edge WebView2 中，PairDock 不会让 WebView2 从互联网加载任何内容。
 
 PairDock 依赖的两个 Windows 组件由微软维护，适用微软自己的条款：
 
@@ -26,7 +36,7 @@ PairDock 依赖的两个 Windows 组件由微软维护，适用微软自己的�
 | 内容 | 位置 |
 |---|---|
 | 按键设置：设备型号编号和每个按键的动作 | `%APPDATA%\dev.pairdock.desktop\config.json` |
-| 语言和外观设置 | `%LOCALAPPDATA%\dev.pairdock.desktop`（WebView2 数据） |
+| 语言、外观和检查更新设置 | `%LOCALAPPDATA%\dev.pairdock.desktop`（WebView2 数据） |
 | 开机启动项（仅在开启"开机自动启动"时） | `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run` 下的 `PairDock` 值 |
 
 PairDock 不写日志文件。设备序列号只用于显示，不会保存。
@@ -41,6 +51,6 @@ PairDock 不写日志文件。设备序列号只用于显示，不会保存。
 
 ## 变更
 
-如果将来 PairDock 需要联网（例如检查更新），我们会在发布该版本之前更新这份说明，并在[更新日志](CHANGELOG.md)中注明。
+如果将来 PairDock 需要因为其他用途联网，我们会在发布该版本之前更新这份说明，并在[更新日志](CHANGELOG.md)中注明。
 
 有疑问请[提交问题](https://github.com/n2ns/pairdock/issues)。

@@ -60,6 +60,11 @@ cargo run -p pairdock-cli -- list      # the command-line tool
 `npm run dev` serves the UI alone in a browser against a simulated backend ("demo mode"). It is
 the quickest way to work on the interface without a receiver.
 
+Local builds do not produce update files. Releases are built by the `Release` workflow when a
+`v*` tag is pushed; it signs the update files with the maintainers' key (repository secrets
+`TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`) and publishes
+`latest.json`, which installed copies check for updates.
+
 ## Project layout
 
 ```text

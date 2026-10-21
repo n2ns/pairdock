@@ -63,6 +63,10 @@ export interface Config {
 
 export type Address = number[];
 
+export interface UpdateInfo {
+  version: string;
+}
+
 export interface Discovered {
   address: Address;
   kind: DeviceKind;
@@ -96,9 +100,16 @@ interface Backend {
   getConfig(): Promise<Config>;
   setButton(wpid: number, cid: number, action: ButtonAction): Promise<Config>;
   onPairing(handler: (event: PairingEvent) => void): Promise<() => void>;
+  checkUpdate(): Promise<UpdateInfo | null>;
+  /** Restores the buttons, runs the installer and restarts PairDock. */
+  installUpdate(): Promise<void>;
+  /** Opens the GitHub repository in the default browser. */
+  openRepository(): Promise<void>;
 }
 
 export const isTauri = "__TAURI_INTERNALS__" in window;
+
+export const REPOSITORY_URL = "https://github.com/n2ns/pairdock";
 
 const tauriBackend: Backend = {
   listReceivers: () => invoke("list_receivers"),
@@ -112,6 +123,9 @@ const tauriBackend: Backend = {
   getConfig: () => invoke("get_config"),
   setButton: (wpid, cid, action) => invoke("set_button", { wpid, cid, action }),
   onPairing: (handler) => listen<PairingEvent>("pairing", (e) => handler(e.payload)),
+  checkUpdate: () => invoke("check_update"),
+  installUpdate: () => invoke("install_update"),
+  openRepository: () => invoke("open_repository"),
 };
 
 // ---------------------------------------------------------------------------
@@ -218,6 +232,13 @@ const demoBackend: Backend = {
   async onPairing(handler) {
     demoListeners.add(handler);
     return () => demoListeners.delete(handler);
+  },
+  async checkUpdate() {
+    return null;
+  },
+  async installUpdate() {},
+  async openRepository() {
+    window.open(REPOSITORY_URL, "_blank", "noopener");
   },
 };
 

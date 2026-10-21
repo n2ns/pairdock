@@ -3,12 +3,34 @@
 [简体中文](PRIVACY.zh-CN.md)
 
 PairDock is a local tool. It has no account, no telemetry, no crash reporting and no
-advertising, and it does not connect to the internet.
+advertising. The only thing it connects to is GitHub, to check for updates, and you can turn
+that off.
 
 ## Network
 
-PairDock makes no network requests. Its interface is bundled with the program and runs in
-Microsoft Edge WebView2, which PairDock does not ask to load anything from the internet.
+PairDock connects to the internet for one purpose: checking for a newer version on GitHub.
+
+- **When**: once each time PairDock starts, unless *Check for updates at startup* is off in
+  Settings, and whenever you click *Check for updates*.
+- **What is requested**: the file
+  `https://github.com/n2ns/pairdock/releases/latest/download/latest.json`, which lists the
+  latest version. GitHub serves it from its own download servers. The request contains no
+  information about you, your devices or your settings; like any web request it reveals your
+  IP address, and it identifies itself as `tauri-plugin-updater/<version>` (the version of the
+update component).
+- **Downloading an update**: only after you click *Install and restart*. PairDock downloads
+  the installer from the same GitHub release and checks its signature before running it.
+
+The *Source code on GitHub* link and the *Star on GitHub* button in Settings open the
+repository page in your web browser; PairDock itself sends nothing.
+
+GitHub's handling of these requests is covered by the
+[GitHub Privacy Statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
+With update checks at startup turned off, PairDock makes no network requests unless you click
+*Check for updates*.
+
+Its interface is bundled with the program and runs in Microsoft Edge WebView2, which PairDock
+does not ask to load anything from the internet.
 
 Two parts of Windows that PairDock relies on are maintained by Microsoft under Microsoft's own
 terms:
@@ -37,7 +59,7 @@ Everything stays on your computer:
 | What | Where |
 |---|---|
 | Button settings: device model IDs and the action of each button | `%APPDATA%\dev.pairdock.desktop\config.json` |
-| Language and appearance | `%LOCALAPPDATA%\dev.pairdock.desktop` (WebView2 data) |
+| Language, appearance and the update check setting | `%LOCALAPPDATA%\dev.pairdock.desktop` (WebView2 data) |
 | The startup entry, if *Launch at startup* is on | `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`, value `PairDock` |
 
 PairDock writes no log files. Device serial numbers are shown, not stored.
@@ -56,8 +78,7 @@ before uninstalling removes the startup entry.
 
 ## Changes
 
-If PairDock ever needs network access (for example, to check for updates), this document will
-say so before the release that adds it, and the change will be listed in the
-[changelog](CHANGELOG.md).
+If PairDock ever needs network access for anything else, this document will say so before the
+release that adds it, and the change will be listed in the [changelog](CHANGELOG.md).
 
 Questions: [open an issue](https://github.com/n2ns/pairdock/issues).

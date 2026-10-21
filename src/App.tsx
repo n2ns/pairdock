@@ -1,13 +1,15 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
-import { isTauri, type PairedDevice } from "./api";
+import { api, isTauri, type PairedDevice, type UpdateInfo } from "./api";
+import { UpdateDialog } from "./components/UpdateDialog";
 import { type Language, resolveStrings, StringsContext } from "./i18n";
 import { DeviceDetail } from "./pages/DeviceDetail";
 import { Devices } from "./pages/Devices";
 import { PairWizard } from "./pages/PairWizard";
 import { Settings } from "./pages/Settings";
 import { type Appearance, applyAppearance, storeAppearance, storedAppearance } from "./theme";
+import { storedAutoUpdate } from "./update";
 
 type Route =
   | { name: "devices" }
@@ -41,6 +43,12 @@ export default function App() {
     storeAppearance(next);
   };
   const contentRef = useRef<HTMLElement>(null);
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+
+  // Once per start; a failed check (offline, no release yet) stays silent.
+  useEffect(() => {
+    if (isTauri && storedAutoUpdate()) api.checkUpdate().then(setUpdate).catch(() => {});
+  }, []);
 
   // Every page starts at the top; the content pane keeps its scroll otherwise.
   useEffect(() => {
@@ -155,11 +163,16 @@ export default function App() {
                   onLanguage={changeLanguage}
                   appearance={appearance}
                   onAppearance={changeAppearance}
+                  onUpdate={setUpdate}
                 />
               )}
             </motion.div>
           </AnimatePresence>
         </main>
+
+        <AnimatePresence>
+          {update && <UpdateDialog update={update} onClose={() => setUpdate(null)} />}
+        </AnimatePresence>
       </div>
     </StringsContext.Provider>
   );

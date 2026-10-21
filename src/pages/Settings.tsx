@@ -2,23 +2,46 @@ import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { useEffect, useState } from "react";
 
 import { version } from "../../package.json";
-import { isTauri } from "../api";
+import { api, isTauri, REPOSITORY_URL, type UpdateInfo } from "../api";
 import { type Language, useStrings } from "../i18n";
 import type { Appearance } from "../theme";
+import { storeAutoUpdate, storedAutoUpdate } from "../update";
 
 export function Settings({
   language,
   onLanguage,
   appearance,
   onAppearance,
+  onUpdate,
 }: {
   language: Language;
   onLanguage: (language: Language) => void;
   appearance: Appearance;
   onAppearance: (appearance: Appearance) => void;
+  onUpdate: (update: UpdateInfo) => void;
 }) {
   const t = useStrings();
   const [autostart, setAutostart] = useState<boolean | null>(null);
+  const [autoUpdate, setAutoUpdate] = useState(storedAutoUpdate);
+  const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "current" | "failed">(
+    "idle",
+  );
+
+  const toggleAutoUpdate = () => {
+    setAutoUpdate(!autoUpdate);
+    storeAutoUpdate(!autoUpdate);
+  };
+
+  const checkUpdate = async () => {
+    setUpdateStatus("checking");
+    try {
+      const update = await api.checkUpdate();
+      setUpdateStatus(update ? "idle" : "current");
+      if (update) onUpdate(update);
+    } catch {
+      setUpdateStatus("failed");
+    }
+  };
 
   useEffect(() => {
     if (isTauri) isEnabled().then(setAutostart).catch(() => setAutostart(false));
@@ -102,12 +125,59 @@ export function Settings({
         </div>
       </section>
 
+      <section className="card setting-row">
+        <div>
+          <h3>{t.autoUpdate}</h3>
+          <p className="muted small">{t.autoUpdateHint}</p>
+        </div>
+        <button
+          role="switch"
+          aria-checked={autoUpdate}
+          className={`switch ${autoUpdate ? "is-on" : ""}`}
+          onClick={toggleAutoUpdate}
+        >
+          <span />
+        </button>
+      </section>
+
+      <section className="card setting-row">
+        <div>
+          <h3>{t.updates}</h3>
+          {updateStatus !== "idle" && (
+            <p className="muted small">
+              {updateStatus === "checking"
+                ? t.checkingUpdate
+                : updateStatus === "current"
+                  ? t.upToDate
+                  : t.updateCheckFailed}
+            </p>
+          )}
+        </div>
+        <button className="btn" disabled={updateStatus === "checking"} onClick={checkUpdate}>
+          {t.checkUpdate}
+        </button>
+      </section>
+
       <section className="card about">
         <img src="/icon.svg" alt="" width="64" height="64" />
         <div>
           <h3>PairDock {version}</h3>
           <p className="muted small">{t.aboutText}</p>
+          <p className="small">
+            <a
+              href={REPOSITORY_URL}
+              onClick={(e) => {
+                e.preventDefault();
+                api.openRepository().catch(() => {});
+              }}
+            >
+              {t.sourceCode}
+            </a>
+          </p>
         </div>
+        <button className="btn about-star" onClick={() => api.openRepository().catch(() => {})}>
+          <span aria-hidden="true">★</span> {t.starOnGithub}
+        </button>
       </section>
     </div>
   );

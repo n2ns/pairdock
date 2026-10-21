@@ -15,12 +15,15 @@ use pairdock_core::{
     remap::RemapEngine,
 };
 use tauri::{AppHandle, Manager};
+use tauri_plugin_updater::Update;
 
 pub struct AppState {
     config_path: PathBuf,
     pub config: Mutex<Config>,
     engine: Mutex<Option<RemapEngine>>,
     pub pairing: tokio::sync::Mutex<Option<PairingSession>>,
+    /// The update found by the last check, installed on request.
+    pub update: tokio::sync::Mutex<Option<Update>>,
 }
 
 /// Devices found by the running discovery, by address.
@@ -87,6 +90,7 @@ impl AppState {
             config: Mutex::new(config),
             engine: Mutex::new(Some(engine)),
             pairing: tokio::sync::Mutex::new(None),
+            update: tokio::sync::Mutex::new(None),
         })
     }
 
@@ -103,6 +107,16 @@ impl AppState {
         }
         *self.config.lock().unwrap() = config;
         Ok(())
+    }
+
+    /// Starts the engine again after [`Self::shutdown`], for when the app keeps
+    /// running after all (a failed update).
+    pub fn restart_engine(&self) {
+        let config = self.config.lock().unwrap().clone();
+        let mut engine = self.engine.lock().unwrap();
+        if engine.is_none() {
+            *engine = Some(RemapEngine::start(config));
+        }
     }
 
     /// Stops pairing and the engine, restoring buttons within `limit`.
@@ -253,6 +267,7 @@ mod tests {
                 _chan: chan,
                 discovered: Default::default(),
             })),
+            update: tokio::sync::Mutex::new(None),
         };
 
         // The receiver hangs while the user quits.

@@ -27,10 +27,11 @@ Logi Options+ is a large suite with background services, an updater, an account,
 features and analytics. If all you need is to pair a mouse or keyboard to your receiver and
 remap a couple of buttons, PairDock does that and nothing else:
 
-- **Small** — one ~2 MB installer, one tray app.
+- **Small** — one ~3 MB installer, one tray app.
 - **No Logitech software or driver** — it talks to the receiver through the HID driver that
   comes with Windows.
-- **Offline** — no account, no telemetry, no network access at all. See [PRIVACY.md](PRIVACY.md).
+- **Private** — no account, no telemetry; the only connection is an update check on GitHub,
+  which you can turn off. See [PRIVACY.md](PRIVACY.md).
 - **Never holds up shutdown** — it answers Windows' shutdown request immediately.
 
 ## Features

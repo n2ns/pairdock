@@ -8,9 +8,16 @@ use pairdock_core::{
     keys::parse_shortcut,
     pairing::{BoltPairing, PairingEvent},
 };
+use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
+use tauri_plugin_opener::OpenerExt;
+use tauri_plugin_updater::UpdaterExt;
 
-use crate::state::{AppState, DiscoveredDevices, PairingSession};
+use crate::{
+    RESTORE_LIMIT,
+    update_marker,
+    state::{AppState, DiscoveredDevices, PairingSession},
+};
 
 /// The event carrying [`PairingEvent`]s to the frontend.
 const PAIRING_EVENT: &str = "pairing";
@@ -135,4 +142,85 @@ pub fn set_button(
 
     state.store_config(config.clone())?;
     Ok(config)
+}
+
+/// A newer release, as shown to the user.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateInfo {
+    version: String,
+}
+
+/// Asks GitHub for a newer release.
+#[tauri::command]
+pub async fn check_update(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<Option<UpdateInfo>, String> {
+    let updater = app
+        .updater_builder()
+        .on_before_exit({
+            let app = app.clone();
+            move || remove_tray(&app)
+        })
+        .build()
+        .map_err(|e| e.to_string())?;
+    let update = updater.check().await.map_err(|e| e.to_string())?;
+    let info = update.as_ref().map(|update| UpdateInfo {
+        version: update.version.clone(),
+    });
+    *state.update.lock().await = update;
+    Ok(info)
+}
+
+/// Downloads the update found by [`check_update`], restores the buttons and
+/// runs the installer, which restarts PairDock with the user's settings.
+#[tauri::command]
+pub async fn install_update(app: AppHandle, state: State<'_, AppState>) -> Result<(), String> {
+    let update = state.update.lock().await.clone().ok_or("no update available")?;
+    let bytes = update.download(|_, _| {}, || {}).await.map_err(|e| e.to_string())?;
+
+    // Leave the buttons working while PairDock is not running. The settings
+    // file is untouched; the new version applies it again when it starts.
+    state.shutdown(RESTORE_LIMIT).await;
+    let marker = update_marker(&app);
+    if let Some(marker) = &marker {
+        let _ = marker.parent().map(std::fs::create_dir_all);
+        let _ = std::fs::write(marker, "");
+    }
+    // On Windows this exits the app once the installer has started.
+    if let Err(err) = update.install(bytes) {
+        if let Some(marker) = &marker {
+            let _ = std::fs::remove_file(marker);
+        }
+        state.restart_engine();
+        return Err(err.to_string());
+    }
+    app.restart()
+}
+
+/// Removes the tray icon before the updater ends the process, which would
+/// otherwise leave a dead icon in the notification area.
+fn remove_tray(app: &AppHandle) {
+    let (done_tx, done_rx) = std::sync::mpsc::channel();
+    let handle = app.clone();
+    let queued = app.run_on_main_thread(move || {
+        drop(handle.remove_tray_by_id("main"));
+        let _ = done_tx.send(());
+    });
+    if queued.is_ok() {
+        let _ = done_rx.recv_timeout(std::time::Duration::from_secs(1));
+    }
+}
+
+/// The project's home, opened from Settings. Fixed here so that the page can
+/// only open this one address.
+const REPOSITORY_URL: &str = "https://github.com/n2ns/pairdock";
+
+/// Opens the GitHub repository in the default browser.
+#[tauri::command]
+pub fn open_repository(app: AppHandle) -> Result<(), String> {
+    app.opener()
+        .open_url(REPOSITORY_URL, None::<&str>)
+        .map_err(|e| e.to_string())
 }

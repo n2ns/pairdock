@@ -1,7 +1,11 @@
 mod commands;
 mod state;
 
-use std::time::Duration;
+use std::{
+    path::PathBuf,
+    sync::atomic::{AtomicBool, Ordering},
+    time::Duration,
+};
 
 use tauri::{
     AppHandle,
@@ -19,8 +23,21 @@ use crate::state::AppState;
 /// Passed by the autostart entry so that pairdock starts in the tray.
 const MINIMIZED_ARG: &str = "--minimized";
 
+/// Set when the previous version installed this one from the window; the
+/// installer restarts PairDock with that version's arguments, which may
+/// include [`MINIMIZED_ARG`].
+static UPDATED: AtomicBool = AtomicBool::new(false);
+
+/// Marks the next start as following an update, see [`UPDATED`].
+pub(crate) fn update_marker(app: &AppHandle) -> Option<PathBuf> {
+    app.path()
+        .app_local_data_dir()
+        .ok()
+        .map(|dir| dir.join("updated"))
+}
+
 /// How long quitting may take to restore diverted buttons.
-const RESTORE_LIMIT: Duration = Duration::from_secs(3);
+pub(crate) const RESTORE_LIMIT: Duration = Duration::from_secs(3);
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -30,6 +47,8 @@ pub fn run() {
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| show_main_window(app)))
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             Some(vec![MINIMIZED_ARG]),
@@ -37,6 +56,9 @@ pub fn run() {
         .setup(|app| {
             #[cfg(windows)]
             migrate_legacy_autostart(app.handle());
+            if let Some(marker) = update_marker(app.handle()) {
+                UPDATED.store(std::fs::remove_file(marker).is_ok(), Ordering::SeqCst);
+            }
             let state = AppState::load(app.handle())?;
             app.manage(state);
             build_tray(app.handle())?;
@@ -44,10 +66,12 @@ pub fn run() {
         })
         // The window starts hidden (see tauri.conf.json) and is shown once the
         // page has loaded, so the webview's blank white surface never shows.
-        // When started minimized it stays in the tray.
+        // When started minimized it stays in the tray, unless it was just
+        // updated from the window.
         .on_page_load(|webview, payload| {
             if payload.event() == PageLoadEvent::Finished
-                && !std::env::args().any(|arg| arg == MINIMIZED_ARG)
+                && (!std::env::args().any(|arg| arg == MINIMIZED_ARG)
+                    || UPDATED.load(Ordering::SeqCst))
             {
                 let _ = webview.window().show();
             }
@@ -71,6 +95,9 @@ pub fn run() {
             commands::rediscover,
             commands::get_config,
             commands::set_button,
+            commands::check_update,
+            commands::install_update,
+            commands::open_repository,
         ])
         .build(tauri::generate_context!())
         .expect("error while building the pairdock app");

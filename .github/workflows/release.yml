@@ -26,10 +26,17 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      # The installers are signed for the updater with the key whose public half
+      # is in tauri.conf.json; latest.json, which the app checks, lists them.
       - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
+          args: --config src-tauri/tauri.release.conf.json
+          # Update with the same installer the docs recommend (setup.exe).
+          updaterJsonPreferNsis: true
           tagName: ${{ github.ref_name }}
           releaseName: PairDock ${{ github.ref_name }}
           releaseBody: See [CHANGELOG.md](https://github.com/n2ns/pairdock/blob/main/CHANGELOG.md) for what changed.
