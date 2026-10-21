@@ -13,11 +13,6 @@ export function MouseUnderside({ size = 220 }: { size?: number }) {
           <stop offset="0" stopColor="var(--mouse-body-2)" />
           <stop offset="1" stopColor="var(--mouse-body-3)" />
         </linearGradient>
-        <linearGradient id={`u-accent-${uid}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#FF8A5B" />
-          <stop offset="0.55" stopColor="#E0518F" />
-          <stop offset="1" stopColor="#6D4AFF" />
-        </linearGradient>
       </defs>
       <ellipse cx="110" cy="326" rx="78" ry="9" className="mouse-shadow" />
       <path
@@ -42,7 +37,7 @@ export function MouseUnderside({ size = 220 }: { size?: number }) {
         cy="112"
         r="30"
         className="underside-ring"
-        stroke={`url(#u-accent-${uid})`}
+        stroke="var(--accent)"
         transform="rotate(-90 110 112)"
       />
       <circle cx="110" cy="112" r="18" className="underside-button" />

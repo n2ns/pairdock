@@ -1,44 +1,46 @@
 /* ---------------------------------------------------------------- tokens */
 
+/* Colors follow Microsoft's Fluent 2 (Windows 11) neutral and brand tokens. */
 :root {
   color-scheme: light;
-  --bg: #f5f3fa;
-  --bg-glow-1: rgba(255, 138, 91, 0.16);
-  --bg-glow-2: rgba(109, 74, 255, 0.14);
-  --surface: rgba(255, 255, 255, 0.78);
+  --bg: #fafafa;
+  --side: #f5f5f5;
+  --surface: #ffffff;
   --surface-solid: #ffffff;
-  --surface-sunken: #f0edf7;
-  --border: rgba(30, 20, 60, 0.08);
-  --border-strong: rgba(30, 20, 60, 0.16);
-  --text: #1c1630;
-  --muted: #6c6584;
-  --shadow: 0 1px 2px rgba(30, 20, 60, 0.05), 0 12px 32px -12px rgba(60, 30, 120, 0.18);
-  --shadow-lift: 0 2px 4px rgba(30, 20, 60, 0.06), 0 22px 44px -16px rgba(60, 30, 120, 0.3);
+  --surface-sunken: #f5f5f5;
+  --border: #e0e0e0;
+  --border-strong: #d1d1d1;
+  --text: #242424;
+  --muted: #616161;
+  --shadow: 0 0 2px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.14);
+  --shadow-lift: 0 0 2px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.14);
 
-  --accent-1: #ff8a5b;
-  --accent-2: #e0518f;
-  --accent-3: #6d4aff;
-  --accent: #7b4dff;
-  --accent-soft: rgba(123, 77, 255, 0.1);
-  --gradient: linear-gradient(135deg, var(--accent-1), var(--accent-2) 55%, var(--accent-3));
-  --success: #18a864;
-  --danger: #e5484d;
+  --accent: #0f6cbd;
+  --accent-hover: #115ea3;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(15, 108, 189, 0.1);
+  --accent-ring: rgba(15, 108, 189, 0.22);
+  /* Kept as a name for "the accent fill"; Fluent uses solid colors. */
+  --gradient: var(--accent);
+  --success: #107c10;
+  --danger: #c50f1f;
 
   --mouse-body-1: #ffffff;
-  --mouse-body-2: #e7e3f1;
-  --mouse-body-3: #d9d4e7;
-  --mouse-edge: rgba(40, 28, 80, 0.18);
-  --mouse-groove: rgba(40, 28, 80, 0.16);
+  --mouse-body-2: #efefef;
+  --mouse-body-3: #e0e0e0;
+  --mouse-edge: rgba(0, 0, 0, 0.18);
+  --mouse-groove: rgba(0, 0, 0, 0.14);
   --mouse-part: rgba(255, 255, 255, 0.001);
-  --mouse-part-hover: rgba(123, 77, 255, 0.12);
-  --mouse-side: #d9d4e7;
-  --mouse-grip-1: #cfc9de;
-  --mouse-grip-2: #b8b1cb;
-  --mouse-shadow: rgba(40, 20, 90, 0.18);
+  --mouse-part-hover: rgba(15, 108, 189, 0.12);
+  --mouse-side: #e0e0e0;
+  --mouse-grip-1: #d6d6d6;
+  --mouse-grip-2: #c7c7c7;
+  --mouse-shadow: rgba(0, 0, 0, 0.16);
+  --nav-selected: rgba(0, 0, 0, 0.05);
 
-  --radius: 18px;
-  --radius-sm: 12px;
-  --radius-control: 8px;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --radius-control: 4px;
   font-family: "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Microsoft YaHei UI",
     system-ui, sans-serif;
   font-size: 14px;
@@ -50,31 +52,37 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg: #0f0c19;
-    --bg-glow-1: rgba(255, 138, 91, 0.1);
-    --bg-glow-2: rgba(109, 74, 255, 0.16);
-    --surface: rgba(30, 25, 46, 0.72);
-    --surface-solid: #1d1830;
-    --surface-sunken: #161226;
-    --border: rgba(255, 255, 255, 0.07);
-    --border-strong: rgba(255, 255, 255, 0.14);
-    --text: #f3f0ff;
-    --muted: #a39cbf;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px -16px rgba(0, 0, 0, 0.6);
-    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 26px 50px -18px rgba(0, 0, 0, 0.7);
-    --accent: #9b7bff;
-    --accent-soft: rgba(155, 123, 255, 0.14);
+    --bg: #1f1f1f;
+    --side: #141414;
+    --surface: #292929;
+    --surface-solid: #292929;
+    --surface-sunken: #1f1f1f;
+    --border: #383838;
+    --border-strong: #525252;
+    --text: #ffffff;
+    --muted: #adadad;
+    --shadow: 0 0 2px rgba(0, 0, 0, 0.24), 0 1px 2px rgba(0, 0, 0, 0.28);
+    --shadow-lift: 0 0 2px rgba(0, 0, 0, 0.24), 0 4px 8px rgba(0, 0, 0, 0.28);
 
-    --mouse-body-1: #3a3352;
-    --mouse-body-2: #241f36;
-    --mouse-body-3: #1c182b;
+    --accent: #479ef5;
+    --accent-hover: #62abf5;
+    --on-accent: #0a0a0a;
+    --accent-soft: rgba(71, 158, 245, 0.14);
+    --accent-ring: rgba(71, 158, 245, 0.3);
+    --success: #54b054;
+    --danger: #dc626d;
+
+    --mouse-body-1: #3d3d3d;
+    --mouse-body-2: #2b2b2b;
+    --mouse-body-3: #222222;
     --mouse-edge: rgba(255, 255, 255, 0.14);
-    --mouse-groove: rgba(0, 0, 0, 0.45);
-    --mouse-part-hover: rgba(155, 123, 255, 0.18);
-    --mouse-side: #2c2640;
-    --mouse-grip-1: #2a2440;
-    --mouse-grip-2: #1d1930;
+    --mouse-groove: rgba(0, 0, 0, 0.5);
+    --mouse-part-hover: rgba(71, 158, 245, 0.2);
+    --mouse-side: #333333;
+    --mouse-grip-1: #2e2e2e;
+    --mouse-grip-2: #242424;
     --mouse-shadow: rgba(0, 0, 0, 0.5);
+    --nav-selected: rgba(255, 255, 255, 0.06);
   }
 }
 
@@ -90,10 +98,7 @@ body,
 }
 
 body {
-  background:
-    radial-gradient(900px 600px at 85% -10%, var(--bg-glow-2), transparent 60%),
-    radial-gradient(700px 500px at -10% 110%, var(--bg-glow-1), transparent 60%),
-    var(--bg);
+  background: var(--bg);
   overflow: hidden;
 }
 
@@ -163,8 +168,7 @@ button {
   gap: 22px;
   padding: 22px 14px;
   border-right: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
-  backdrop-filter: blur(24px);
+  background: var(--side);
 }
 
 .brand {
@@ -176,7 +180,6 @@ button {
 
 .brand img {
   border-radius: 10px;
-  box-shadow: 0 6px 16px -6px rgba(224, 81, 143, 0.6);
 }
 
 .brand strong {
@@ -219,9 +222,20 @@ nav {
   position: absolute;
   inset: 0;
   border-radius: var(--radius-control);
-  background: var(--surface-solid);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
+  background: var(--nav-selected);
+}
+
+/* Windows 11 navigation: a short accent pill marks the selected item. */
+.nav-active::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 3px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 2px;
+  background: var(--accent);
 }
 
 .nav-icon,
@@ -283,7 +297,6 @@ nav {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(20px);
 }
 
 .notice-card {
@@ -348,12 +361,11 @@ nav {
 .btn-primary {
   border-color: transparent;
   background: var(--gradient);
-  color: #fff;
-  box-shadow: 0 8px 20px -10px rgba(224, 81, 143, 0.8);
+  color: var(--on-accent);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 12px 26px -10px rgba(224, 81, 143, 0.9);
+  background: var(--accent-hover);
 }
 
 .btn-danger {
@@ -569,8 +581,7 @@ nav {
   height: 38px;
   border-radius: 12px;
   background: var(--gradient);
-  color: #fff;
-  box-shadow: 0 8px 18px -10px rgba(224, 81, 143, 0.9);
+  color: var(--on-accent);
 }
 
 .receiver-badge svg {
@@ -748,9 +759,7 @@ nav {
   align-items: center;
   gap: 10px;
   padding: 28px 20px 20px;
-  background:
-    radial-gradient(260px 220px at 50% 34%, var(--accent-soft), transparent 70%),
-    var(--surface);
+  background: var(--surface);
 }
 
 .side-view {
@@ -850,7 +859,7 @@ nav {
 .choice.is-active {
   border-color: transparent;
   background: var(--gradient);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .keys {
@@ -923,6 +932,9 @@ kbd {
 
 .mouse-art {
   overflow: visible;
+  /* Shrink with narrow cards instead of overflowing them. */
+  max-width: 100%;
+  height: auto;
 }
 
 .mouse-shadow {
@@ -1003,7 +1015,7 @@ kbd {
 
 .mouse-ripple {
   fill: none;
-  stroke: var(--accent-2);
+  stroke: var(--accent);
   stroke-width: 3;
   transform-box: fill-box;
   transform-origin: center;
@@ -1023,6 +1035,37 @@ kbd {
     transform: scale(2.4);
     opacity: 0;
   }
+}
+
+.side-wheel {
+  fill: var(--mouse-side);
+  stroke: var(--mouse-edge);
+  stroke-width: 1.2;
+}
+
+.side-label {
+  fill: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.side-label.is-active {
+  fill: var(--accent);
+}
+
+.side-direction {
+  fill: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.side-direction-line {
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+}
+
+.side-arrowhead {
+  fill: var(--border-strong);
 }
 
 .mouse-mark {
@@ -1075,7 +1118,7 @@ kbd {
 
 .stepper li.is-current .stepper-dot {
   background: var(--gradient);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .stepper li.is-done .stepper-dot {
@@ -1104,9 +1147,7 @@ kbd {
   justify-content: center;
   min-height: 340px;
   border-radius: var(--radius);
-  background:
-    radial-gradient(220px 200px at 50% 45%, var(--accent-soft), transparent 70%),
-    var(--surface-sunken);
+  background: var(--surface-sunken);
 }
 
 .stage-copy {
@@ -1163,11 +1204,8 @@ kbd {
 
 .instruction {
   font-size: 30px;
-  font-weight: 750;
-  background: var(--gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-weight: 700;
+  color: var(--accent);
 }
 
 .click-seq {
@@ -1206,7 +1244,6 @@ kbd {
   transform: translateY(-4px) scale(1.12);
   border-color: transparent;
   background: var(--gradient);
-  box-shadow: 0 10px 22px -10px rgba(224, 81, 143, 0.9);
 }
 
 .ci-body {
@@ -1224,11 +1261,11 @@ kbd {
 }
 
 .click-seq li.is-next .ci-body {
-  stroke: #fff;
+  stroke: var(--on-accent);
 }
 
 .click-seq li.is-next .ci-on {
-  fill: #fff;
+  fill: var(--on-accent);
 }
 
 .progress-bar {
@@ -1285,9 +1322,8 @@ kbd {
 .keycap.is-next {
   border-color: transparent;
   background: var(--gradient);
-  color: #fff;
+  color: var(--on-accent);
   transform: translateY(-4px);
-  box-shadow: 0 14px 26px -12px rgba(224, 81, 143, 0.9);
   animation: keypulse 1.2s ease-in-out infinite;
 }
 
@@ -1384,7 +1420,7 @@ kbd {
 }
 
 .underside-finger ellipse {
-  fill: var(--accent-2);
+  fill: var(--accent);
   opacity: 0;
   animation: finger 4.4s ease-in-out infinite;
   transform-box: fill-box;
@@ -1530,7 +1566,7 @@ kbd {
 }
 
 .burst span:nth-child(odd) {
-  background: var(--accent-1);
+  background: var(--accent-hover);
 }
 
 @keyframes burst {
@@ -1641,7 +1677,7 @@ kbd {
 
   .buttons-layout,
   .stage-split {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .stepper span:last-child {

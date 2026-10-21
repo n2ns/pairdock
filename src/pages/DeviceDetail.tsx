@@ -129,6 +129,7 @@ export function DeviceDetail({ receiverId, device, onBack }: Props) {
           <section className="card buttons-stage">
             <MouseArt
               size={210}
+              sideLabels={{ back: t.sideBack, forward: t.sideForward }}
               selectable={selectable}
               selected={selectedPart}
               highlight={selectedPart ? [selectedPart] : []}
@@ -138,7 +139,13 @@ export function DeviceDetail({ receiverId, device, onBack }: Props) {
             {(partToCid.has("back") || partToCid.has("forward")) && (
               <div className="side-view">
                 <MouseSideArt
-                  size={290}
+                  size={320}
+                  labels={{
+                    back: t.sideBack,
+                    forward: t.sideForward,
+                    front: t.sideFront,
+                    rear: t.sideRear,
+                  }}
                   selectable={selectable}
                   selected={selectedPart}
                   highlight={

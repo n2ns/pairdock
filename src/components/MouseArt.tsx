@@ -23,8 +23,13 @@ interface Props {
   onSelect?: (part: MousePart) => void;
   /** Parts drawn with a small badge, e.g. customized buttons. */
   marked?: MousePart[];
+  /** Names written next to the side buttons; widens the picture to the left. */
+  sideLabels?: { back: string; forward: string };
   size?: number;
 }
+
+/** Room on the left for the side button names. */
+const LABEL_SPACE = 84;
 
 const BODY =
   "M130 22 C 74 22 38 70 33 150 L 30 252 C 28 332 72 382 130 382 C 188 382 232 332 230 252 L 227 150 C 222 70 186 22 130 22 Z";
@@ -46,17 +51,20 @@ export function MouseArt({
   selected = null,
   onSelect,
   marked = [],
+  sideLabels,
   size = 260,
 }: Props) {
   const uid = useId().replace(/:/g, "");
   const id = (name: string) => `${name}-${uid}`;
   const order: MousePart[] = ["left", "right", "forward", "back", "middle"];
+  const left = sideLabels ? -LABEL_SPACE : 0;
+  const width = 260 - left;
 
   return (
     <svg
       className="mouse-art"
-      viewBox="0 0 260 410"
-      width={size}
+      viewBox={`${left} 0 ${width} 410`}
+      width={(size * width) / 260}
       height={(size * 410) / 260}
       role="img"
       aria-label="mouse"
@@ -70,11 +78,6 @@ export function MouseArt({
           <stop offset="0" stopColor="#fff" stopOpacity="0.55" />
           <stop offset="1" stopColor="#fff" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id={id("accent")} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#FF8A5B" />
-          <stop offset="0.55" stopColor="#E0518F" />
-          <stop offset="1" stopColor="#6D4AFF" />
-        </linearGradient>
         <clipPath id={id("clip")}>
           <path d={BODY} />
         </clipPath>
@@ -152,6 +155,26 @@ export function MouseArt({
             />
           </g>
         ))}
+      {sideLabels &&
+        (["forward", "back"] as const).map((part) => (
+          <g key={`label-${part}`} pointerEvents="none">
+            <line
+              x1="-6"
+              x2="13"
+              y1={PARTS[part].cy}
+              y2={PARTS[part].cy}
+              className="side-direction-line"
+            />
+            <text
+              x="-10"
+              y={PARTS[part].cy + 4}
+              textAnchor="end"
+              className={`side-label ${selected === part || highlight.includes(part) ? "is-active" : ""}`}
+            >
+              {sideLabels[part]}
+            </text>
+          </g>
+        ))}
       {order
         .filter((part) => marked.includes(part))
         .map((part) => (
@@ -160,7 +183,7 @@ export function MouseArt({
             cx={PARTS[part].cx + (part === "back" || part === "forward" ? -14 : 22)}
             cy={PARTS[part].cy - 22}
             r="6"
-            fill={`url(#${id("accent")})`}
+            fill="var(--accent)"
             className="mouse-mark"
           />
         ))}
@@ -200,7 +223,7 @@ function Part({
       d={PARTS[part].d}
       className={classes}
       // Inline style, so the accent wins over the part colors set in CSS.
-      style={lit || selected === part ? { fill: `url(#${id("accent")})` } : undefined}
+      style={lit || selected === part ? { fill: "var(--accent)" } : undefined}
       filter={lit ? `url(#${id("glow")})` : undefined}
       onClick={canSelect ? () => onSelect?.(part) : undefined}
     >

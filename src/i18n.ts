@@ -66,6 +66,11 @@ const en = {
   presetPlayPause: "Play / pause",
   presetNextTrack: "Next track",
 
+  sideBack: "Back",
+  sideForward: "Forward",
+  sideFront: "Front",
+  sideRear: "Rear",
+
   controlNames: {
     80: "Left button",
     81: "Right button",
@@ -186,6 +191,11 @@ const zh: typeof en = {
   presetMute: "静音",
   presetPlayPause: "播放 / 暂停",
   presetNextTrack: "下一曲",
+
+  sideBack: "后退",
+  sideForward: "前进",
+  sideFront: "前",
+  sideRear: "后",
 
   controlNames: {
     80: "左键",
