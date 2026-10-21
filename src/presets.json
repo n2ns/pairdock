@@ -1,0 +1,116 @@
+{
+  "macos": [
+    {
+      "label": "presetBrowserBack",
+      "keys": "Cmd+["
+    },
+    {
+      "label": "presetBrowserForward",
+      "keys": "Cmd+]"
+    },
+    {
+      "label": "presetDesktop",
+      "keys": "F11"
+    },
+    {
+      "label": "presetTaskView",
+      "keys": "Ctrl+Up"
+    },
+    {
+      "label": "presetDesktopLeft",
+      "keys": "Ctrl+Left"
+    },
+    {
+      "label": "presetDesktopRight",
+      "keys": "Ctrl+Right"
+    },
+    {
+      "label": "presetAppWindows",
+      "keys": "Ctrl+Down"
+    },
+    {
+      "label": "presetSwitchApp",
+      "keys": "Cmd+Tab"
+    },
+    {
+      "label": "presetCloseWindow",
+      "keys": "Cmd+W"
+    },
+    {
+      "label": "presetScreenshot",
+      "keys": "Cmd+Shift+4"
+    },
+    {
+      "label": "presetEmoji",
+      "keys": "Ctrl+Cmd+Space"
+    }
+  ],
+  "windows": [
+    {
+      "label": "presetBrowserBack",
+      "keys": "Alt+Left"
+    },
+    {
+      "label": "presetBrowserForward",
+      "keys": "Alt+Right"
+    },
+    {
+      "label": "presetDesktop",
+      "keys": "Win+D"
+    },
+    {
+      "label": "presetTaskView",
+      "keys": "Win+Tab"
+    },
+    {
+      "label": "presetDesktopLeft",
+      "keys": "Win+Ctrl+Left"
+    },
+    {
+      "label": "presetDesktopRight",
+      "keys": "Win+Ctrl+Right"
+    },
+    {
+      "label": "presetSwitchApp",
+      "keys": "Alt+Tab"
+    },
+    {
+      "label": "presetCloseWindow",
+      "keys": "Alt+F4"
+    },
+    {
+      "label": "presetScreenshot",
+      "keys": "Win+Shift+S"
+    },
+    {
+      "label": "presetEmoji",
+      "keys": "Win+Period"
+    }
+  ],
+  "all": [
+    {
+      "label": "presetVolumeUp",
+      "keys": "VolumeUp"
+    },
+    {
+      "label": "presetVolumeDown",
+      "keys": "VolumeDown"
+    },
+    {
+      "label": "presetMute",
+      "keys": "Mute"
+    },
+    {
+      "label": "presetPlayPause",
+      "keys": "PlayPause"
+    },
+    {
+      "label": "presetPrevTrack",
+      "keys": "PrevTrack"
+    },
+    {
+      "label": "presetNextTrack",
+      "keys": "NextTrack"
+    }
+  ]
+}

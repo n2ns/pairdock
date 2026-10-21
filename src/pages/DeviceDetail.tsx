@@ -17,6 +17,7 @@ import { MouseArt, type MousePart, partForControl } from "../components/MouseArt
 import { MouseSideArt } from "../components/MouseSideArt";
 import { Keys, ShortcutRecorder } from "../components/ShortcutRecorder";
 import { type Strings, useStrings } from "../i18n";
+import presets from "../presets.json";
 
 interface Props {
   receiverId: string;
@@ -304,34 +305,12 @@ function ActionSummary({
   }
 }
 
-const PRESETS: { label: keyof Strings; keys: string }[] = [
-  ...(isMac
-    ? [
-        { label: "presetCopy", keys: "Cmd+C" },
-        { label: "presetPaste", keys: "Cmd+V" },
-        { label: "presetUndo", keys: "Cmd+Z" },
-        { label: "presetBrowserBack", keys: "Cmd+[" },
-        { label: "presetBrowserForward", keys: "Cmd+]" },
-        { label: "presetDesktop", keys: "F11" },
-        { label: "presetTaskView", keys: "Ctrl+Up" },
-        { label: "presetScreenshot", keys: "Cmd+Shift+4" },
-      ] satisfies { label: keyof Strings; keys: string }[]
-    : [
-        { label: "presetCopy", keys: "Ctrl+C" },
-        { label: "presetPaste", keys: "Ctrl+V" },
-        { label: "presetUndo", keys: "Ctrl+Z" },
-        { label: "presetBrowserBack", keys: "Alt+Left" },
-        { label: "presetBrowserForward", keys: "Alt+Right" },
-        { label: "presetDesktop", keys: "Win+D" },
-        { label: "presetTaskView", keys: "Win+Tab" },
-        { label: "presetScreenshot", keys: "Win+Shift+S" },
-      ] satisfies { label: keyof Strings; keys: string }[]),
-  { label: "presetVolumeUp", keys: "VolumeUp" },
-  { label: "presetVolumeDown", keys: "VolumeDown" },
-  { label: "presetMute", keys: "Mute" },
-  { label: "presetPlayPause", keys: "PlayPause" },
-  { label: "presetNextTrack", keys: "NextTrack" },
-];
+// The common shortcuts, per platform. src-tauri/tests/presets.rs checks that
+// every one parses and has a label.
+const PRESETS = [...(isMac ? presets.macos : presets.windows), ...presets.all] as {
+  label: keyof Strings;
+  keys: string;
+}[];
 
 function ActionEditor({
   control,

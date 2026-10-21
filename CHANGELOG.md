@@ -12,11 +12,19 @@ All notable changes to PairDock are listed here. The format follows
   a notice that leads to the Accessibility permission needed for shortcuts, and shortcut presets
   with Mac keys. Releases include `.dmg` files for Apple silicon and Intel Macs and update files
   for both.
+- Common shortcuts for switching to the desktop on the left or right (Windows: `Win+Ctrl+Left` /
+  `Win+Ctrl+Right`; macOS spaces: `Ctrl+Left` / `Ctrl+Right`), switching windows (`Alt+Tab`,
+  `Cmd+Tab`), closing the window (`Alt+F4`, `Cmd+W`), the emoji panel (`Win+Period`,
+  `Ctrl+Cmd+Space`), the app's windows on macOS (`Ctrl+Down`) and the previous track.
 
 ### Changed
 
 - A smaller window and interface (85 %) and a narrower sidebar, to fit laptop screens; the mouse
   picture on the button settings page is smaller, leaving more room for the settings.
+
+### Removed
+
+- The Copy, Paste and Undo common shortcuts; they can still be recorded.
 
 ## [0.0.1] - 2026-10-21
 

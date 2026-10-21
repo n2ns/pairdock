@@ -1,7 +1,9 @@
 //! Parsing keyboard shortcuts such as `Ctrl+Shift+T` and sending them with
 //! `enigo`.
 
-use enigo::Key;
+use std::{thread, time::Duration};
+
+use enigo::{Direction, Enigo, Key, Keyboard, Settings};
 
 /// A parsed shortcut: the keys to hold down, in order.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -53,6 +55,7 @@ fn parse_key(name: &str) -> Result<Key, String> {
         "enter" | "return" => Key::Return,
         "esc" | "escape" => Key::Escape,
         "space" => Key::Space,
+        "period" => period_key(),
         "backspace" => Key::Backspace,
         "delete" | "del" => Key::Delete,
         "volumeup" => Key::VolumeUp,
@@ -67,6 +70,38 @@ fn parse_key(name: &str) -> Result<Key, String> {
         "browserforward" => Key::BrowserForward,
         _ => return Err(format!("unknown key: {name}")),
     })
+}
+
+/// Presses the keys of a shortcut in order, or releases them in reverse
+/// order. Keys that cannot be sent are logged and skipped.
+pub fn send(enigo: &mut Enigo, Shortcut(keys): &Shortcut, direction: Direction) {
+    let ordered: Box<dyn Iterator<Item = &Key>> = match direction {
+        Direction::Release => Box::new(keys.iter().rev()),
+        _ => Box::new(keys.iter()),
+    };
+    for key in ordered {
+        if let Err(err) = enigo.key(*key, direction) {
+            tracing::warn!("could not send {key:?}: {err}");
+        }
+    }
+}
+
+/// Presses a shortcut, holds it for `hold` and releases it, from a thread of
+/// its own as the remapping engine does. Used to try shortcuts out.
+pub fn tap(shortcut: Shortcut, hold: Duration) -> Result<(), String> {
+    thread::spawn(move || {
+        let settings = Settings {
+            open_prompt_to_get_permissions: false,
+            ..Settings::default()
+        };
+        let mut enigo = Enigo::new(&settings).map_err(|e| e.to_string())?;
+        send(&mut enigo, &shortcut, Direction::Press);
+        thread::sleep(hold);
+        send(&mut enigo, &shortcut, Direction::Release);
+        Ok(())
+    })
+    .join()
+    .map_err(|_| "the key thread panicked".to_string())?
 }
 
 /// Whether the system lets PairDock send key events. On macOS this needs the
@@ -159,6 +194,19 @@ fn char_key(c: char) -> Key {
     Key::Other(code)
 }
 
+/// The period key, which Windows uses for the emoji panel (`Win+Period`).
+fn period_key() -> Key {
+    // VK_OEM_PERIOD: "For any country/region, the Period and Greater Than key"
+    // (Windows virtual-key codes).
+    #[cfg(target_os = "windows")]
+    return Key::Other(0xbe);
+    // kVK_ANSI_Period (HIToolbox's Events.h), see `char_key`.
+    #[cfg(target_os = "macos")]
+    return Key::Other(0x2f);
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+    return Key::Unicode('.');
+}
+
 fn function_key(n: u8) -> Option<Key> {
     Some(match n {
         1 => Key::F1,
@@ -232,6 +280,14 @@ mod tests {
     #[test]
     fn rejects_brackets_outside_macos() {
         assert!(parse_shortcut("Ctrl+[").is_err());
+    }
+
+    #[test]
+    fn parses_the_period_key() {
+        assert_eq!(
+            parse_shortcut("Win+Period"),
+            Ok(Shortcut(vec![Key::Meta, super::period_key()]))
+        );
     }
 
     #[test]

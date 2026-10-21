@@ -12,7 +12,7 @@ use std::{
     time::Duration,
 };
 
-use enigo::{Direction, Enigo, Keyboard, Settings};
+use enigo::{Direction, Enigo, Settings};
 use hidapi::HidApi;
 use hidpp::{
     channel::HidppChannel,
@@ -28,7 +28,7 @@ use tokio::{sync::watch, task::JoinHandle, time::timeout};
 use crate::{
     config::{ButtonAction, Config},
     enumerate::{ChannelRole, list_receivers, open_receiver},
-    keys::{Shortcut, parse_shortcut},
+    keys::{self, Shortcut, parse_shortcut},
 };
 
 /// How often the engine looks for newly plugged-in receivers.
@@ -454,7 +454,7 @@ impl Injector {
             };
             let mut enigo = None;
             let mut warned = false;
-            while let Ok((Shortcut(keys), direction)) = rx.recv() {
+            while let Ok((shortcut, direction)) = rx.recv() {
                 if enigo.is_none() {
                     match Enigo::new(&settings) {
                         Ok(created) => enigo = Some(created),
@@ -466,15 +466,7 @@ impl Injector {
                     }
                 }
                 let Some(enigo) = enigo.as_mut() else { continue };
-                let ordered: Box<dyn Iterator<Item = _>> = match direction {
-                    Direction::Release => Box::new(keys.into_iter().rev()),
-                    _ => Box::new(keys.into_iter()),
-                };
-                for key in ordered {
-                    if let Err(err) = enigo.key(key, direction) {
-                        tracing::warn!("could not send {key:?}: {err}");
-                    }
-                }
+                keys::send(enigo, &shortcut, direction);
             }
         });
         Self(tx)

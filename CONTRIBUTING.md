@@ -37,6 +37,7 @@ pairdock-cli unpair <slot>
 pairdock-cli info <slot>             # HID++ features and reprogrammable controls
 pairdock-cli run --config <file>     # apply button settings until Ctrl+C
 pairdock-cli reset                   # return every button to its default
+pairdock-cli send <shortcut>         # send a shortcut the way a mapped button does
 ```
 
 ## Building from source
@@ -57,6 +58,18 @@ npm run tauri dev                      # run the app with hot reload
 npm run tauri build                    # build the installers in target/release/bundle
 cargo test --workspace                 # unit tests
 cargo run -p pairdock-cli -- list      # the command-line tool
+```
+
+The common shortcuts offered in the UI are listed in `src/presets.json`; `cargo test` checks that
+every one parses on the platform it runs on and has a label in `src/i18n.ts`. To check what they
+actually do on Windows, run the smoke test on an unlocked desktop and leave the mouse and keyboard
+alone for half a minute. It sends each one with `pairdock-cli send`, reads the effect back
+(desktop, window in front, volume, ...) and undoes it; presets it cannot check are listed as
+`MANUAL`:
+
+```bash
+cargo build -p pairdock-cli
+powershell -ExecutionPolicy Bypass -File scripts/smoke-shortcuts.ps1
 ```
 
 `npm run dev` serves the UI alone in a browser against a simulated backend ("demo mode"). It is

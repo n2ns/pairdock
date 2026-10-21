@@ -186,14 +186,17 @@ it may still show as on. Remove PairDock from the list with the **−** button (
 
 ### Shortcuts
 
-The common shortcuts use the Mac keys: **Copy** `Cmd+C`, **Paste** `Cmd+V`, **Undo** `Cmd+Z`,
-**Browser back / forward** `Cmd+[` / `Cmd+]`, **Show desktop** `F11`,
-**Mission Control** `Ctrl+Up` and **Screenshot** `Cmd+Shift+4`. Recorded shortcuts are shown
+The common shortcuts use the Mac keys: **Browser back / forward** `Cmd+[` / `Cmd+]`,
+**Show desktop** `F11`,
+**Mission Control** `Ctrl+Up`, **Space on the left / right** `Ctrl+Left` / `Ctrl+Right`,
+**App windows** `Ctrl+Down`, **Switch app** `Cmd+Tab`, **Close window** `Cmd+W`,
+**Screenshot** `Cmd+Shift+4` and **Character Viewer** `Ctrl+Cmd+Space`. Recorded shortcuts are shown
 with **Cmd** and **Option**.
 
 Letters and digits are sent as the keys in those positions on a US keyboard, the way macOS
-numbers its keys. With a layout that moves letters, such as AZERTY or Dvorak, a common shortcut
-like `Cmd+Z` presses the key where Z is on a US keyboard.
+numbers its keys. Recorded shortcuts use the keys you pressed, so they work with any layout. With
+a layout that moves letters, such as AZERTY or Dvorak, a shortcut written as `Cmd+W` in the
+settings file presses the key where W is on a US keyboard.
 
 ### Quitting
 

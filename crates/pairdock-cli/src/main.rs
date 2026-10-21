@@ -3,6 +3,7 @@ use std::time::Duration;
 use anyhow::{Context, Result, bail};
 use pairdock_core::{
     enumerate::{ChannelRole, list_receivers, open_receiver},
+    keys::{self, parse_shortcut},
     hidpp::receiver::{Receiver, bolt},
     pairing::{BoltPairing, Click, PairingEvent, PasskeyPress, PasskeyPrompt},
 };
@@ -49,6 +50,14 @@ enum Command {
         /// Slot number as shown by `list`.
         slot: u8,
     },
+
+    /// Send a shortcut the way a mapped button does, e.g. `Win+Ctrl+Right`.
+    Send {
+        shortcut: String,
+        /// How long the keys stay pressed.
+        #[arg(long, default_value_t = 100)]
+        hold_ms: u64,
+    },
 }
 
 /// How long `pair` waits for discovery and passkey entry in total.
@@ -83,6 +92,7 @@ async fn main() -> Result<()> {
         Command::Run { config } => run(&config).await,
         Command::Reset => reset().await,
         Command::Unpair { slot } => unpair(&api, slot).await,
+        Command::Send { shortcut, hold_ms } => send(&shortcut, hold_ms),
     }
 }
 
@@ -235,6 +245,11 @@ fn print_prompt(prompt: &PasskeyPrompt) {
             );
         },
     }
+}
+
+fn send(shortcut: &str, hold_ms: u64) -> Result<()> {
+    let shortcut = parse_shortcut(shortcut).map_err(anyhow::Error::msg)?;
+    keys::tap(shortcut, Duration::from_millis(hold_ms)).map_err(anyhow::Error::msg)
 }
 
 async fn unpair(api: &HidApi, slot: u8) -> Result<()> {
