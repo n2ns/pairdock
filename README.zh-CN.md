@@ -95,6 +95,6 @@ macOS 用户请下载 `PairDock_x.y.z_aarch64.dmg`（Apple 芯片）或 `PairDoc
 
 ## 许可证
 
-[MIT](LICENSE)。内置的 `crates/hidpp` 采用 0BSD 许可证，见[说明](crates/hidpp/NOTICE.md)。
+[Apache-2.0](LICENSE)。内置的 `crates/hidpp` 采用 0BSD 许可证，见[说明](crates/hidpp/NOTICE.md)。
 
 PairDock 是独立项目，与罗技公司无关，也未获其认可。"Logitech"、"Logi"、"Logi Bolt"、"Unifying" 和 "Logi Options+" 是罗技公司的商标。

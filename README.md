@@ -117,7 +117,7 @@ Bug reports with your device model and a protocol trace help most — see
 
 ## License
 
-[MIT](LICENSE). The vendored `crates/hidpp` is 0BSD, see [its notice](crates/hidpp/NOTICE.md).
+[Apache-2.0](LICENSE). The vendored `crates/hidpp` is 0BSD, see [its notice](crates/hidpp/NOTICE.md).
 
 PairDock is an independent project and is not affiliated with or endorsed by Logitech.
 "Logitech", "Logi", "Logi Bolt", "Unifying" and "Logi Options+" are trademarks of Logitech.

@@ -123,4 +123,4 @@ device features.
 - For protocol changes, describe the device you tested with and, if you can, attach a trace.
 - Code comments are in English. UI text goes into both languages in `src/i18n.ts`.
 
-By contributing you agree that your contributions are licensed under the [MIT license](LICENSE).
+By contributing you agree that your contributions are licensed under the [Apache-2.0 license](LICENSE).

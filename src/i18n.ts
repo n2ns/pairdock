@@ -158,7 +158,7 @@ const en = {
   updateDownloading: "Downloading…",
   updateInstallFailed: "The update could not be installed.",
   aboutText:
-    "PairDock pairs devices and customizes buttons on Logitech receivers using the system's built-in HID driver. Open source under the MIT license.",
+    "PairDock pairs devices and customizes buttons on Logitech receivers using the system's built-in HID driver. Open source under the Apache License 2.0.",
   sourceCode: "Source code on GitHub",
   starOnGithub: "Star on GitHub",
   demoMode: "Demo mode: showing simulated devices because PairDock is running in a browser.",
@@ -312,7 +312,7 @@ const zh: typeof en = {
   updateDownloading: "正在下载…",
   updateInstallFailed: "更新没有安装成功。",
   aboutText:
-    "PairDock 通过系统自带的 HID 驱动，为罗技接收器配对设备、自定义按键。以 MIT 许可证开源。",
+    "PairDock 通过系统自带的 HID 驱动，为罗技接收器配对设备、自定义按键。以 Apache-2.0 许可证开源。",
   sourceCode: "GitHub 上的源代码",
   starOnGithub: "在 GitHub 上点 Star",
   demoMode: "演示模式：当前在浏览器中运行，显示的是模拟设备。",
